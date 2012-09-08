@@ -1,0 +1,39 @@
+# Gron
+
+Gron's purpose is to turn JSON into grep-able, but still valid, JavaScript.
+
+Gron is written in PHP. It requires PHP 5.2 or better.
+
+## Usage
+
+Pipe JSON into Gron's stdin:
+
+    # cat test-input.json | ./gron
+
+Result:
+
+    json = {};
+    json["one"] = 1;
+    json["two"] = 2;
+    json["three-b"] = "3";
+    json["four"] = [];
+    json["four"][0] = 1;
+    json["four"][1] = 2;
+    json["four"][2] = 3;
+    json["four"][3] = 4;
+    json["five"] = {};
+    json["five"]["alpha"] = [];
+    json["five"]["alpha"][0] = "fo";
+    json["five"]["alpha"][1] = "fum";
+    json["five"]["beta"] = {};
+    json["five"]["beta"]["hey"] = "How's tricks?";
+
+The idea is that you can grep the result to find what you're looking for, and where it exists in the JSON structure:
+
+     cat test-input.json | ./gron | grep tricks
+
+Result: 
+
+     json["five"]["beta"]["hey"] = "How's tricks?";
+
+This is useful when exploring unfamiliar APIs that have large responses but lacklustre documentation.

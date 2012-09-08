@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-// Get the whole of stdin; let us hope it is not too big.
+// Take valid JSON on stdin, then output it as discrete assignments
 $buffer = '';
 while ($l = fgets(STDIN)){
   $buffer .= $l;

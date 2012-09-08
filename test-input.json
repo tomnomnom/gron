@@ -1,7 +1,7 @@
 {
   "one": 1,
   "two": 2,
-  "three": "3",
+  "three-b": "3",
   "four": [1,2,3,4],
   "five": {
     "alpha": ["fo", "fum"],
