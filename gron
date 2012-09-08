@@ -1,12 +1,19 @@
 #!/usr/bin/env php
 <?php
-// Take valid JSON on stdin, then output it as discrete assignments
-$buffer = '';
-while ($l = fgets(STDIN)){
-  $buffer .= $l;
-}
+//////////
+// Gron //
+//////////
+
+// Take valid JSON on stdin, then output it as discrete assignments to make it grep-able
+// The code is hacky, but small.
+
+// Tom Hudson - 2012
+// https://github.com/TomNomNom/gron 
+
+$buffer = file_get_contents('php://stdin');
 
 $struct = json_decode($buffer);
+
 printSruct($struct);
 
 function printSruct($struct, $prefix = 'json'){
@@ -23,13 +30,7 @@ function printSruct($struct, $prefix = 'json'){
 
   foreach ($struct as $k => $v){
     $k = json_encode($k);
-    $outputKey = "{$prefix}[{$k}]";
-    if (is_scalar($v)){
-      $v = json_encode($v);
-      echo "{$outputKey} = {$v};\n"; 
-    } else {
-      printSruct($v, $outputKey);
-    }
+    printSruct($v, "{$prefix}[{$k}]");
   }
 }
 
