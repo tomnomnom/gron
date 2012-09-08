@@ -30,10 +30,31 @@ Result:
 
 The idea is that you can grep the result to find what you're looking for, and where it exists in the JSON structure:
 
-     cat test-input.json | ./gron | grep tricks
+    # cat test-input.json | ./gron | grep tricks
 
 Result: 
 
-     json["five"]["beta"]["hey"] = "How's tricks?";
+    json["five"]["beta"]["hey"] = "How's tricks?";
 
-This is useful when exploring unfamiliar APIs that have large responses but lacklustre documentation.
+This is useful when exploring unfamiliar APIs that have large responses but lacklustre documentation. 
+
+You could even use it direct with curl:
+
+    # curl -H'Accept: application/json' http://api.tomnomnom.com/crypto/blowfish/randomsalt 2> /dev/null | ./gron
+
+Result: 
+
+    json = {};
+    json["salt"] = "$2a$11$6rm6zQm3DaQQqZYjXerBjf";
+
+## Tips
+
+Put Gron in your path so you don't have to use the "./":
+
+    # cat test-input.json | gron
+
+Instead of:
+
+    # cat test-input.json | ./gron
+
+
