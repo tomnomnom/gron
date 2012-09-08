@@ -2,7 +2,7 @@
 
 Gron's purpose is to turn JSON into grep-able, but still valid, JavaScript.
 
-Gron is written in PHP. It requires PHP 5.2 or better.
+Gron is written in PHP. It requires PHP 5.2 or newer.
 
 ## Usage
 
@@ -49,8 +49,9 @@ Result:
 
 ## Tips
 
-Put Gron in your path so you don't have to use the "./":
+Put Gron in your `$PATH` (e.g. `/usr/bin/gron`) so you don't have to use the "./":
 
+    # sudo mv gron /usr/bin/gron
     # cat test-input.json | gron
 
 Instead of:
