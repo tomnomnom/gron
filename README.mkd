@@ -8,10 +8,7 @@ Gron is written in PHP. It requires PHP 5.2 or newer.
 
 Pipe JSON into Gron's stdin:
 
-    # cat test-input.json | ./gron
-
-Result:
-
+    ~# cat test-input.json | ./gron
     json = {};
     json["one"] = 1;
     json["two"] = 2;
@@ -30,32 +27,40 @@ Result:
 
 The idea is that you can grep the result to find what you're looking for, and where it exists in the JSON structure:
 
-    # cat test-input.json | ./gron | grep tricks
-
-Result: 
-
+    ~# cat test-input.json | ./gron | grep tricks
     json["five"]["beta"]["hey"] = "How's tricks?";
 
 This is useful when exploring unfamiliar APIs that have large responses but lacklustre documentation. 
 
-You could even use it direct with curl:
+Gron can also fetch JSON straight from files:
 
-    # curl -H'Accept: application/json' http://api.tomnomnom.com/crypto/blowfish/randomsalt 2> /dev/null | ./gron
+    ~# ./gron test-input.json | grep tricks
+    json["five"]["alpha"][1] = "fum";
 
-Result: 
+Or from URLs:
 
+    ~# ./gron http://api.tomnomnom.com/crypto/blowfish/randomsalt
     json = {};
     json["salt"] = "$2a$11$6rm6zQm3DaQQqZYjXerBjf";
+
+## Exit codes
+
+Gron's exit code depends on what happened:
+
+    0 - Success
+    1 - Failed to decode JSON
+    2 - Argument is not valid file or URL
+    3 - Failed to fetch data from URL
 
 ## Tips
 
 Put Gron in your `$PATH` (e.g. `/usr/bin/gron`) so you don't have to use the "./":
 
-    # sudo mv gron /usr/bin/gron
-    # cat test-input.json | gron
+    ~# sudo mv gron /usr/bin/gron
+    ~# cat test-input.json | gron
 
 Instead of:
 
-    # cat test-input.json | ./gron
+    ~# cat test-input.json | ./gron
 
 
