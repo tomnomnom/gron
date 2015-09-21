@@ -56,11 +56,27 @@ $struct = json_decode($buffer);
 $err = json_last_error();
 
 if ($err != JSON_ERROR_NONE){
-  fputs(STDERR, "Failed to decode JSON\n");
-  exit(1);
-}
+  // Attempt to read as multiple lines of JSON (sometimes found in streaming APIs etc)
+  $lines = explode("\n", trim($buffer));
+  for ($i = 0; $i < sizeOf($lines); $i++){
 
-printSruct($struct);
+    $line = $lines[$i];
+    $struct = json_decode($line);
+    $err = json_last_error();
+
+    // No dice; time to die
+    if ($err != JSON_ERROR_NONE){
+      fputs(STDERR, "Failed to decode JSON\n");
+      exit(1);
+    }
+
+    printSruct($struct, "json{$i}");
+    echo PHP_EOL;
+  }
+} else {
+  // Buffer is all one JSON blob
+  printSruct($struct);
+}
 
 function printSruct($struct, $prefix = 'json'){
   if (is_object($struct)){
