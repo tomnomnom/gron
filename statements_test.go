@@ -27,6 +27,10 @@ func TestStatementsSimple(t *testing.T) {
 
 	ss, err := makeStatements("json", top)
 
+	if err != nil {
+		t.Errorf("Want nil error from makeStatements() but got %s", err)
+	}
+
 	wants := []string{
 		`json = {};`,
 		`json.dotted = "A dotted value";`,

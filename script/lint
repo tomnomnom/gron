@@ -1,0 +1,13 @@
+#!/bin/sh
+PROJDIR=$(cd `dirname $0`/.. && pwd)
+cd ${PROJDIR}
+
+which gometalinter > /dev/null
+
+if [ $? -ne 0 ]; then
+    echo "You don't have gometalinter. Installing it..."
+    go get github.com/alecthomas/gometalinter
+    gometalinter --install
+fi
+
+gometalinter --disable=gocyclo

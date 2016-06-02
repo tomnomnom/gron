@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	exitOK = iota
+	_ = iota
 	exitInvalidArgs
 )
 
