@@ -15,7 +15,7 @@ func main() {
 		todo(err)
 	}
 
-	// The 'JSON' object could actually be an object, array or scalar,
+	// The 'JSON' be an object, array or scalar,
 	// so the best we can do for now is an empty interface type
 	var top interface{}
 	err = json.Unmarshal(raw, &top)
@@ -23,9 +23,13 @@ func main() {
 		todo(err)
 	}
 
-	err = printStatements("json", top)
+	ss, err := makeStatements("json", top)
 	if err != nil {
 		todo(err)
+	}
+
+	for _, s := range ss.statements {
+		fmt.Println(s)
 	}
 }
 
@@ -49,47 +53,69 @@ func makePrefix(prev string, next interface{}) (string, error) {
 	}
 }
 
-func printStatements(prefix string, v interface{}) error {
+type statementGroup struct {
+	statements []string
+}
+
+func (s *statementGroup) Add(extra string) {
+	s.statements = append(s.statements, extra)
+}
+
+func (s *statementGroup) AddGroup(g *statementGroup) {
+	s.statements = append(s.statements, g.statements...)
+}
+
+func makeStatements(prefix string, v interface{}) (*statementGroup, error) {
+	ss := &statementGroup{make([]string, 0)}
+
 	switch vv := v.(type) {
 
 	case map[string]interface{}:
 		// It's an object
-		fmt.Printf("%s = {};\n", prefix)
+		ss.Add(fmt.Sprintf("%s = {};", prefix))
 
 		for k, sub := range vv {
 			newPrefix, err := makePrefix(prefix, k)
 			if err != nil {
-				return err
+				return ss, err
 			}
-			printStatements(newPrefix, sub)
+			extra, err := makeStatements(newPrefix, sub)
+			if err != nil {
+				return ss, err
+			}
+			ss.AddGroup(extra)
 		}
 
 	case []interface{}:
 		// It's an array
-		fmt.Printf("%s = [];\n", prefix)
+		ss.Add(fmt.Sprintf("%s = [];", prefix))
 
 		for k, sub := range vv {
 			newPrefix, err := makePrefix(prefix, k)
 			if err != nil {
-				return err
+				return ss, err
 			}
-			printStatements(newPrefix, sub)
+			extra, err := makeStatements(newPrefix, sub)
+			if err != nil {
+				return ss, err
+			}
+			ss.AddGroup(extra)
 		}
 
 	case float64:
-		fmt.Printf("%s = %s;\n", prefix, escape(vv))
+		ss.Add(fmt.Sprintf("%s = %s;", prefix, escape(vv)))
 
 	case string:
-		fmt.Printf("%s = %s;\n", prefix, escape(vv))
+		ss.Add(fmt.Sprintf("%s = %s;", prefix, escape(vv)))
 
 	case bool:
-		fmt.Printf("%s = %t;\n", prefix, vv)
+		ss.Add(fmt.Sprintf("%s = %t;", prefix, vv))
 
 	case nil:
-		fmt.Printf("%s = null;\n", prefix)
+		ss.Add(fmt.Sprintf("%s = null;", prefix))
 	}
 
-	return nil
+	return ss, nil
 }
 
 func escape(s interface{}) string {
