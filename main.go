@@ -2,14 +2,27 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 )
 
+const (
+	exitOK = iota
+	exitInvalidArgs
+)
+
 func main() {
-	filename := "test-input.json"
+	flag.Parse()
+
+	filename := flag.Arg(0)
+	if filename == "" {
+		os.Exit(exitInvalidArgs)
+	}
+
 	raw, err := ioutil.ReadFile(filename)
 	if err != nil {
 		todo(err)
