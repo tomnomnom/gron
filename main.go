@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sort"
 )
 
 const (
@@ -40,6 +41,8 @@ func main() {
 	if err != nil {
 		todo(err)
 	}
+
+	sort.Sort(ss)
 
 	for _, s := range ss.statements {
 		fmt.Println(s)
@@ -76,6 +79,27 @@ func (s *statementGroup) Add(prefix, value string) {
 
 func (s *statementGroup) AddGroup(g *statementGroup) {
 	s.statements = append(s.statements, g.statements...)
+}
+
+func (s *statementGroup) Len() int {
+	return len(s.statements)
+}
+
+func (s *statementGroup) Swap(i, j int) {
+	s.statements[i], s.statements[j] = s.statements[j], s.statements[i]
+}
+
+func (s *statementGroup) Less(i, j int) bool {
+	return s.statements[i] < s.statements[j]
+}
+
+func (s *statementGroup) Contains(search string) bool {
+	for _, i := range s.statements {
+		if i == search {
+			return true
+		}
+	}
+	return false
 }
 
 func makeStatements(prefix string, v interface{}) (*statementGroup, error) {
