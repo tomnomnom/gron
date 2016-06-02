@@ -44,7 +44,7 @@ func main() {
 
 	sort.Sort(ss)
 
-	for _, s := range ss.statements {
+	for _, s := range ss {
 		fmt.Println(s)
 	}
 }
@@ -69,32 +69,30 @@ func makePrefix(prev string, next interface{}) (string, error) {
 	}
 }
 
-type statementGroup struct {
-	statements []string
+type statements []string
+
+func (ss *statements) Add(prefix, value string) {
+	*ss = append(*ss, fmt.Sprintf("%s = %s;", prefix, value))
 }
 
-func (s *statementGroup) Add(prefix, value string) {
-	s.statements = append(s.statements, fmt.Sprintf("%s = %s;", prefix, value))
+func (ss *statements) AddGroup(g statements) {
+	*ss = append(*ss, g...)
 }
 
-func (s *statementGroup) AddGroup(g *statementGroup) {
-	s.statements = append(s.statements, g.statements...)
+func (ss statements) Len() int {
+	return len(ss)
 }
 
-func (s *statementGroup) Len() int {
-	return len(s.statements)
+func (ss statements) Swap(i, j int) {
+	ss[i], ss[j] = ss[j], ss[i]
 }
 
-func (s *statementGroup) Swap(i, j int) {
-	s.statements[i], s.statements[j] = s.statements[j], s.statements[i]
+func (ss statements) Less(i, j int) bool {
+	return ss[i] < ss[j]
 }
 
-func (s *statementGroup) Less(i, j int) bool {
-	return s.statements[i] < s.statements[j]
-}
-
-func (s *statementGroup) Contains(search string) bool {
-	for _, i := range s.statements {
+func (ss statements) Contains(search string) bool {
+	for _, i := range ss {
 		if i == search {
 			return true
 		}
@@ -102,8 +100,8 @@ func (s *statementGroup) Contains(search string) bool {
 	return false
 }
 
-func makeStatements(prefix string, v interface{}) (*statementGroup, error) {
-	ss := &statementGroup{make([]string, 0)}
+func makeStatements(prefix string, v interface{}) (statements, error) {
+	ss := make(statements, 0)
 
 	switch vv := v.(type) {
 
