@@ -57,8 +57,8 @@ type statementGroup struct {
 	statements []string
 }
 
-func (s *statementGroup) Add(extra string) {
-	s.statements = append(s.statements, extra)
+func (s *statementGroup) Add(prefix, value string) {
+	s.statements = append(s.statements, fmt.Sprintf("%s = %s;", prefix, value))
 }
 
 func (s *statementGroup) AddGroup(g *statementGroup) {
@@ -72,7 +72,7 @@ func makeStatements(prefix string, v interface{}) (*statementGroup, error) {
 
 	case map[string]interface{}:
 		// It's an object
-		ss.Add(fmt.Sprintf("%s = {};", prefix))
+		ss.Add(prefix, "{}")
 
 		for k, sub := range vv {
 			newPrefix, err := makePrefix(prefix, k)
@@ -88,7 +88,7 @@ func makeStatements(prefix string, v interface{}) (*statementGroup, error) {
 
 	case []interface{}:
 		// It's an array
-		ss.Add(fmt.Sprintf("%s = [];", prefix))
+		ss.Add(prefix, "[]")
 
 		for k, sub := range vv {
 			newPrefix, err := makePrefix(prefix, k)
@@ -103,16 +103,16 @@ func makeStatements(prefix string, v interface{}) (*statementGroup, error) {
 		}
 
 	case float64:
-		ss.Add(fmt.Sprintf("%s = %s;", prefix, escape(vv)))
+		ss.Add(prefix, escape(vv))
 
 	case string:
-		ss.Add(fmt.Sprintf("%s = %s;", prefix, escape(vv)))
+		ss.Add(prefix, escape(vv))
 
 	case bool:
-		ss.Add(fmt.Sprintf("%s = %t;", prefix, vv))
+		ss.Add(prefix, fmt.Sprintf("%t", vv))
 
 	case nil:
-		ss.Add(fmt.Sprintf("%s = null;", prefix))
+		ss.Add(prefix, "null")
 	}
 
 	return ss, nil
