@@ -16,7 +16,8 @@ func TestStatementsSimple(t *testing.T) {
 		"anarr": [1, 1.5],
 		"anob": {
 			"foo": "bar"
-		}
+		},
+		"else": 1
 	}`)
 
 	var top interface{}
@@ -43,6 +44,7 @@ func TestStatementsSimple(t *testing.T) {
 		`json.anarr[1] = 1.5;`,
 		`json.anob = {};`,
 		`json.anob.foo = "bar";`,
+		`json["else"] = 1;`,
 	}
 
 	for _, want := range wants {
@@ -81,10 +83,18 @@ func TestKeyMustBeQuoted(t *testing.T) {
 		key  string
 		want bool
 	}{
+		// Fine to be dotted
 		{"dotted", false},
 		{"dotted123", false},
+
+		// Invalid chars
 		{"is-quoted", true},
 		{"Definitely quoted!", true},
+
+		// Reserved words
+		{"true", true},
+		{"else", true},
+		{"null", true},
 	}
 
 	for _, test := range tests {

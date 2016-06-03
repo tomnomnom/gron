@@ -6,6 +6,46 @@ import (
 	"regexp"
 )
 
+// The javascript reserved words cannot be used as unquoted keys
+var reservedWords = []string{
+	"break",
+	"case",
+	"catch",
+	"class",
+	"const",
+	"continue",
+	"debugger",
+	"default",
+	"delete",
+	"do",
+	"else",
+	"export",
+	"extends",
+	"false",
+	"finally",
+	"for",
+	"function",
+	"if",
+	"import",
+	"in",
+	"instanceof",
+	"new",
+	"null",
+	"return",
+	"super",
+	"switch",
+	"this",
+	"throw",
+	"true",
+	"try",
+	"typeof",
+	"var",
+	"void",
+	"while",
+	"with",
+	"yield",
+}
+
 // statements is a list of assignment statements.
 // E.g statement: json.foo = "bar";
 type statements []string
@@ -120,7 +160,17 @@ func formatValue(s interface{}) string {
 //     1startsWithANumber	  -> true
 func keyMustBeQuoted(s string) bool {
 	r := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*$`)
-	return !r.MatchString(s)
+	if !r.MatchString(s) {
+		return true
+	}
+
+	// Check the list of reserved words
+	for _, i := range reservedWords {
+		if s == i {
+			return true
+		}
+	}
+	return false
 }
 
 // makePrefix takes the previous prefix and the next key and

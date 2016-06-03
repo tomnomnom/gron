@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	_ = iota
+	exitOK = iota
 	exitInvalidArgs
 )
 
@@ -46,6 +46,8 @@ func main() {
 	for _, s := range ss {
 		fmt.Println(s)
 	}
+
+	os.Exit(exitOK)
 }
 
 func todo(err error) {
