@@ -20,7 +20,7 @@ const (
 
 func init() {
 	flag.Usage = func() {
-		h := "Transform the JSON from a file (or stdin) into discrete assignments\n\n"
+		h := "Transform JSON from a file (or stdin) into discrete assignments to make it greppable\n\n"
 
 		h += "Usage:\n"
 		h += "  gron [jsonfile]\n\n"

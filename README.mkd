@@ -45,7 +45,7 @@ Get help:
 
 ```
 ▶ gron --help
-Transform the JSON from a file (or stdin) into discrete assignments
+Transform JSON from a file (or stdin) into discrete assignments to make it greppable
 
 Usage:
   gron [jsonfile]
