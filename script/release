@@ -1,0 +1,24 @@
+#!/bin/bash
+PROJDIR=$(cd `dirname $0`/.. && pwd)
+
+TAG=${1}
+USER="tomnomnom"
+REPO="gron"
+
+cd ${PROJDIR}
+go build github.com/${USER}/${REPO}
+
+github-release release \
+    --user ${USER} \
+    --repo ${REPO} \
+    --tag ${TAG} \
+    --name "${REPO} v${TAG}" \
+    --description "v${TAG}" \
+    --pre-release
+
+github-release upload \
+    --user ${USER} \
+    --repo ${REPO} \
+    --tag ${TAG} \
+    --name "linux-amd64-${REPO}" \
+    --file ${PROJDIR}/${REPO}

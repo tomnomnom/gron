@@ -1,4 +1,5 @@
 # Gron
+[![Build Status](https://travis-ci.org/tomnomnom/gron.svg?branch=master)](https://travis-ci.org/tomnomnom/gron)
 
 Make JSON greppable!
 
