@@ -7,32 +7,57 @@ It eases the exploration of APIs that return large blobs of JSON but have terrib
 
 ## Usage
 
+Get JSON from a file:
+
 ```
-▶ gron testdata/one.json 
+▶ gron testdata/two.json 
 json = {};
-json.abool = true;
-json.abool2 = false;
-json.five = {};
-json.five.alpha = [];
-json.five.alpha[0] = "fo";
-json.five.alpha[1] = "fum";
-json.five.beta = {};
-json.five.beta.hey = "How's tricks?";
-json.four = [];
-json.four[0] = 1;
-json.four[1] = 2;
-json.four[2] = 3;
-json.four[3] = 4;
-json.isnull = null;
-json.one = 1;
-json.two = 2.2;
-json["three-b"] = "3";
+json.contact = {};
+json.contact.email = "mail@tomnomnom.com";
+json.contact.twitter = "@TomNomNom";
+json.github = "https://github.com/tomnomnom/";
+json.likes = [];
+json.likes[0] = "code";
+json.likes[1] = "cheese";
+json.likes[2] = "meat";
+json.name = "Tom";
 ```
 
-Grep for a value and easily see how to access it:
+Or from `stdin`:
 
 ```
-▶ gron testdata/one.json | grep tricks
-json.five.beta.hey = "How's tricks?";
+▶ curl -s http://headers.jsontest.com/ | gron
+json = {};
+json.Accept = "*/*";
+json.Host = "headers.jsontest.com";
+json["User-Agent"] = "curl/7.43.0";
+json["X-Cloud-Trace-Context"] = "c70f7bf26661c67d0b9f2cde6f295319/13941186890243645147";
 ```
 
+Grep for a value and easily where it sits in the JSON:
+
+```
+▶ gron testdata/two.json | grep twitter
+json.contact.twitter = "@TomNomNom";
+```
+
+Get help:
+
+```
+▶ ./gron --help
+Transform the JSON from a file (or stdin) into discrete assignments
+
+Usage:
+  gron [jsonfile]
+
+Exit Codes:
+  0 OK
+  1 Failed to open file
+  2 Failed to read input
+  3 Failed to decode JSON
+  4 Failed to from statements
+
+Examples:
+  gron /tmp/apiresponse.json
+  curl -s http://headers.jsontest.com/ | gron
+```
