@@ -4,41 +4,76 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"sort"
 )
 
 const (
 	exitOK = iota
-	exitInvalidArgs
+	exitOpenFile
+	exitReadInput
+	exitJSONDecode
+	exitFormStatements
 )
+
+func init() {
+	flag.Usage = func() {
+		h := "Transform the JSON from a file (or stdin) into discrete assignments\n\n"
+
+		h += "Usage:\n"
+		h += "  gron [jsonfile]\n\n"
+
+		h += "Exit Codes:\n"
+		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
+		h += fmt.Sprintf("  %d\t%s\n", exitOpenFile, "Failed to open file")
+		h += fmt.Sprintf("  %d\t%s\n", exitReadInput, "Failed to read input")
+		h += fmt.Sprintf("  %d\t%s\n", exitJSONDecode, "Failed to decode JSON")
+		h += fmt.Sprintf("  %d\t%s\n", exitFormStatements, "Failed to from statements")
+		h += "\n"
+
+		h += "Examples:\n"
+		h += "  gron /tmp/apiresponse.json\n"
+		h += "  curl -s http://headers.jsontest.com/ | gron\n"
+
+		fmt.Fprintf(os.Stderr, h)
+	}
+}
 
 func main() {
 	flag.Parse()
 
+	var raw io.Reader
+
 	filename := flag.Arg(0)
 	if filename == "" {
-		os.Exit(exitInvalidArgs)
+		raw = os.Stdin
+	} else {
+		r, err := os.Open(filename)
+		if err != nil {
+			fatal(exitOpenFile, "failed to open file", err)
+		}
+		raw = r
 	}
 
-	raw, err := ioutil.ReadFile(filename)
+	b, err := ioutil.ReadAll(raw)
 	if err != nil {
-		todo(err)
+		fatal(exitReadInput, "failed to read input", err)
 	}
 
 	// The 'JSON' be an object, array or scalar,
 	// so the best we can do for now is an empty interface type
 	var top interface{}
-	err = json.Unmarshal(raw, &top)
+
+	err = json.Unmarshal(b, &top)
 	if err != nil {
-		todo(err)
+		fatal(exitJSONDecode, "failed to decode JSON", err)
 	}
 
 	ss, err := makeStatements("json", top)
 	if err != nil {
-		todo(err)
+		fatal(exitFormStatements, "failed to form statements", err)
 	}
 
 	sort.Sort(ss)
@@ -50,6 +85,7 @@ func main() {
 	os.Exit(exitOK)
 }
 
-func todo(err error) {
-	log.Fatalf("TODO: %s", err)
+func fatal(code int, msg string, err error) {
+	fmt.Fprintf(os.Stderr, "%s (%s)\n", msg, err)
+	os.Exit(code)
 }
