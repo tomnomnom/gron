@@ -174,7 +174,7 @@ func keyMustBeQuoted(s string) bool {
 }
 
 // makePrefix takes the previous prefix and the next key and
-// returns a new prefix or and error on failure
+// returns a new prefix or an error on failure
 func makePrefix(prev string, next interface{}) (string, error) {
 	switch v := next.(type) {
 	case int:
