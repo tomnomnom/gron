@@ -44,7 +44,7 @@ json.contact.twitter = "@TomNomNom";
 Get help:
 
 ```
-▶ ./gron --help
+▶ gron --help
 Transform the JSON from a file (or stdin) into discrete assignments
 
 Usage:
