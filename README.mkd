@@ -65,6 +65,10 @@ Examples:
 
 ## Installation
 
+If you're a Go user you can just use `go get`:
+
 ```
 ▶ go get github.com/tomnomnom/gron
 ```
+
+Or you can download a binary from the [releases page](https://github.com/tomnomnom/gron/releases).

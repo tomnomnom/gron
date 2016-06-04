@@ -5,6 +5,16 @@ TAG=${1}
 USER="tomnomnom"
 REPO="gron"
 
+if [[ -z "${TAG}" ]]; then
+    echo "Usage: ${0} <tag>"
+    exit 1
+fi
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+    echo "You forgot to set your GITHUB_TOKEN"
+    exit 2
+fi
+
 cd ${PROJDIR}
 go build github.com/${USER}/${REPO}
 
@@ -20,5 +30,5 @@ github-release upload \
     --user ${USER} \
     --repo ${REPO} \
     --tag ${TAG} \
-    --name "linux-amd64-${REPO}" \
+    --name "${REPO}-linux-amd64" \
     --file ${PROJDIR}/${REPO}
