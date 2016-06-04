@@ -34,7 +34,7 @@ json["User-Agent"] = "curl/7.43.0";
 json["X-Cloud-Trace-Context"] = "c70f7bf26661c67d0b9f2cde6f295319/13941186890243645147";
 ```
 
-Grep for a value and easily where it sits in the JSON:
+Grep for something and easily see the path to it:
 
 ```
 ▶ gron testdata/two.json | grep twitter
