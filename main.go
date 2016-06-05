@@ -50,11 +50,19 @@ func main() {
 	if filename == "" {
 		raw = os.Stdin
 	} else {
-		r, err := os.Open(filename)
-		if err != nil {
-			fatal(exitOpenFile, "failed to open file", err)
+		if !validURL(filename) {
+			r, err := os.Open(filename)
+			if err != nil {
+				fatal(exitOpenFile, "failed to open file", err)
+			}
+			raw = r
+		} else {
+			r, err := getURL(filename)
+			if err != nil {
+				fatal(exitOpenFile, "failed to open file from URL", err)
+			}
+			raw = r
 		}
-		raw = r
 	}
 
 	b, err := ioutil.ReadAll(raw)
