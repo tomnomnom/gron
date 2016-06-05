@@ -64,7 +64,7 @@ The output of `gron` is valid JavaScript:
   name: 'Tom' }
 ```
 
-Get help:
+## Get Help
 
 ```
 ▶ gron --help
