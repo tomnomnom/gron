@@ -16,14 +16,15 @@ const (
 	exitReadInput
 	exitJSONDecode
 	exitFormStatements
+	exitFetchURL
 )
 
 func init() {
 	flag.Usage = func() {
-		h := "Transform JSON from a file (or stdin) into discrete assignments to make it greppable\n\n"
+		h := "Transform JSON (from a file, URL, or stdin) into discrete assignments to make it greppable\n\n"
 
 		h += "Usage:\n"
-		h += "  gron [jsonfile]\n\n"
+		h += "  gron [file|url]\n\n"
 
 		h += "Exit Codes:\n"
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
@@ -31,10 +32,12 @@ func init() {
 		h += fmt.Sprintf("  %d\t%s\n", exitReadInput, "Failed to read input")
 		h += fmt.Sprintf("  %d\t%s\n", exitJSONDecode, "Failed to decode JSON")
 		h += fmt.Sprintf("  %d\t%s\n", exitFormStatements, "Failed to from statements")
+		h += fmt.Sprintf("  %d\t%s\n", exitFetchURL, "Failed to fetch URL")
 		h += "\n"
 
 		h += "Examples:\n"
 		h += "  gron /tmp/apiresponse.json\n"
+		h += "  gron http://headers.jsontest.com/ \n"
 		h += "  curl -s http://headers.jsontest.com/ | gron\n"
 
 		fmt.Fprintf(os.Stderr, h)
@@ -50,11 +53,19 @@ func main() {
 	if filename == "" {
 		raw = os.Stdin
 	} else {
-		r, err := os.Open(filename)
-		if err != nil {
-			fatal(exitOpenFile, "failed to open file", err)
+		if !validURL(filename) {
+			r, err := os.Open(filename)
+			if err != nil {
+				fatal(exitOpenFile, "failed to open file", err)
+			}
+			raw = r
+		} else {
+			r, err := getURL(filename)
+			if err != nil {
+				fatal(exitFetchURL, "failed to fetch URL", err)
+			}
+			raw = r
 		}
-		raw = r
 	}
 
 	b, err := ioutil.ReadAll(raw)
@@ -62,7 +73,7 @@ func main() {
 		fatal(exitReadInput, "failed to read input", err)
 	}
 
-	// The 'JSON' be an object, array or scalar,
+	// The 'JSON' might be an object, array or scalar,
 	// so the best we can do for now is an empty interface type
 	var top interface{}
 
