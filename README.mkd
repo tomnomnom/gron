@@ -42,6 +42,18 @@ Grep for something and easily see the path to it:
 json.contact.twitter = "@TomNomNom";
 ```
 
+The output of `gron` is valid JavaScript:
+
+```
+▶ gron testdata/two.json > tmp.js
+▶ echo "console.log(json);" >> tmp.js
+▶ nodejs tmp.js
+{ contact: { email: 'mail@tomnomnom.com', twitter: '@TomNomNom' },
+  github: 'https://github.com/tomnomnom/',
+  likes: [ 'code', 'cheese', 'meat' ],
+  name: 'Tom' }
+```
+
 Get help:
 
 ```
