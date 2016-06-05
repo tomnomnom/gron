@@ -24,6 +24,16 @@ json.likes[2] = "meat";
 json.name = "Tom";
 ```
 
+From a URL:
+
+```
+▶ gron http://headers.jsontest.com/
+json = {};
+json.Host = "headers.jsontest.com";
+json["User-Agent"] = "Go-http-client/1.1";
+json["X-Cloud-Trace-Context"] = "6917a823919477919dbc1523584ba25d/11970839830843610056";
+```
+
 Or from `stdin`:
 
 ```
@@ -58,20 +68,22 @@ Get help:
 
 ```
 ▶ gron --help
-Transform JSON from a file (or stdin) into discrete assignments to make it greppable
+Transform JSON (from a file, URL, or stdin) into discrete assignments to make it greppable
 
 Usage:
-  gron [jsonfile]
+  gron [file|url]
 
 Exit Codes:
-  0 OK
-  1 Failed to open file
-  2 Failed to read input
-  3 Failed to decode JSON
-  4 Failed to from statements
+  0	OK
+  1	Failed to open file
+  2	Failed to read input
+  3	Failed to decode JSON
+  4	Failed to from statements
+  5	Failed to fetch URL
 
 Examples:
   gron /tmp/apiresponse.json
+  gron http://headers.jsontest.com/ 
   curl -s http://headers.jsontest.com/ | gron
 ```
 
