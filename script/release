@@ -5,7 +5,6 @@ TAG=${1}
 USER="tomnomnom"
 REPO="gron"
 BINARY="${REPO}"
-ARCHIVE="${BINARY}-linux-amd64-${TAG}.tgz"
 
 if [[ -z "${TAG}" ]]; then
     echo "Usage: ${0} <tag>"
@@ -18,20 +17,35 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
 fi
 
 cd ${PROJDIR}
-go build github.com/${USER}/${REPO}
-tar --create --gzip --file=${ARCHIVE} ${BINARY}
 
-github-release release \
-    --user ${USER} \
-    --repo ${REPO} \
-    --tag ${TAG} \
-    --name "${REPO} v${TAG}" \
-    --description "v${TAG}" \
-    --pre-release
+# Check if tag exists
+git fetch --tags
+git tag | grep "^${TAG}$"
 
-github-release upload \
-    --user ${USER} \
-    --repo ${REPO} \
-    --tag ${TAG} \
-    --name "${ARCHIVE}" \
-    --file ${PROJDIR}/${ARCHIVE}
+if [ $? -ne 0 ]; then
+    github-release release \
+        --user ${USER} \
+        --repo ${REPO} \
+        --tag ${TAG} \
+        --name "${REPO} v${TAG}" \
+        --description "v${TAG}" \
+        --pre-release
+fi
+
+
+for OS in "darwin" "linux"; do
+
+    rm -f ${BINARY}
+
+    GOOS=${OS} GOARCH=amd64 go build github.com/${USER}/${REPO}
+
+    ARCHIVE="${BINARY}-${OS}-amd64-${TAG}.tgz"
+    tar --create --gzip --file=${ARCHIVE} ${BINARY}
+
+    github-release upload \
+        --user ${USER} \
+        --repo ${REPO} \
+        --tag ${TAG} \
+        --name "${ARCHIVE}" \
+        --file ${PROJDIR}/${ARCHIVE}
+done
