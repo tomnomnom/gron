@@ -12,8 +12,16 @@ func validURL(url string) bool {
 }
 
 func getURL(url string) (io.Reader, error) {
+	var client http.Client
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "gron/0.1")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return nil, err
