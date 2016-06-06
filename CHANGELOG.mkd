@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+- Underscores no-longer cause keys to be quoted
+- HTTP requests are now done with `Accept: application/json`
+- HTTP requests are now done with `User-Agent: gron/0.1`
+
 ## 0.1.1
 - Adds support for fetching URLs directly
 
