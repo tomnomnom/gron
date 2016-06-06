@@ -50,7 +50,7 @@ func main() {
 	var raw io.Reader
 
 	filename := flag.Arg(0)
-	if filename == "" {
+	if filename == "" || filename == "-" {
 		raw = os.Stdin
 	} else {
 		if !validURL(filename) {
