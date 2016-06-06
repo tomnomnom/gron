@@ -86,6 +86,7 @@ func TestKeyMustBeQuoted(t *testing.T) {
 		// Fine to be dotted
 		{"dotted", false},
 		{"dotted123", false},
+		{"_under_scores", false},
 
 		// Invalid chars
 		{"is-quoted", true},

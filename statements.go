@@ -159,7 +159,7 @@ func formatValue(s interface{}) string {
 //     a key with spaces      -> true
 //     1startsWithANumber	  -> true
 func keyMustBeQuoted(s string) bool {
-	r := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*$`)
+	r := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 	if !r.MatchString(s) {
 		return true
 	}
