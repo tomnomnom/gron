@@ -4,6 +4,8 @@ PROJDIR=$(cd `dirname $0`/.. && pwd)
 TAG=${1}
 USER="tomnomnom"
 REPO="gron"
+BINARY="${REPO}"
+ARCHIVE="${BINARY}-linux-amd64-${TAG}.tgz"
 
 if [[ -z "${TAG}" ]]; then
     echo "Usage: ${0} <tag>"
@@ -17,6 +19,7 @@ fi
 
 cd ${PROJDIR}
 go build github.com/${USER}/${REPO}
+tar --create --gzip --file=${ARCHIVE} ${BINARY}
 
 github-release release \
     --user ${USER} \
@@ -30,5 +33,5 @@ github-release upload \
     --user ${USER} \
     --repo ${REPO} \
     --tag ${TAG} \
-    --name "${REPO}-linux-amd64" \
-    --file ${PROJDIR}/${REPO}
+    --name "${ARCHIVE}" \
+    --file ${PROJDIR}/${ARCHIVE}
