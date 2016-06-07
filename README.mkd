@@ -6,8 +6,20 @@ Make JSON greppable!
 gron transforms JSON into discrete assignments to make it easier to `grep` for what you want and see the absolute 'path' to it.
 It eases the exploration of APIs that return large blobs of JSON but have terrible documentation.
 
+## Installation
+
 gron has no runtime dependencies. You can just [download a binary for Linux or Mac and run it](https://github.com/tomnomnom/gron/releases).
-Put the binary in your `$PATH` to make things easy on yourself.
+Put the binary in your `$PATH` (e.g. in `/usr/bin`) to make it easy to use:
+```
+▶ tar xzf gron-linux-amd64-0.1.5.tgz
+▶ sudo mv gron /usr/bin/
+```
+
+Or if you're a Go user you can use `go get`:
+
+```
+▶ go get github.com/tomnomnom/gron
+```
 
 ## Usage
 
@@ -66,16 +78,6 @@ The output of `gron` is valid JavaScript:
   likes: [ 'code', 'cheese', 'meat' ],
   name: 'Tom' }
 ```
-
-## Installation
-
-If you're a Go user you can just use `go get`:
-
-```
-▶ go get github.com/tomnomnom/gron
-```
-
-Or you can download a binary from the [releases page](https://github.com/tomnomnom/gron/releases).
 
 ## Get Help
 
