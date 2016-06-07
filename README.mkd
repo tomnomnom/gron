@@ -1,10 +1,13 @@
-# Gron
+# gron
 [![Build Status](https://travis-ci.org/tomnomnom/gron.svg?branch=master)](https://travis-ci.org/tomnomnom/gron)
 
 Make JSON greppable!
 
-Gron transforms JSON into discrete assignments to make it easier to `grep` for what you want and see the absolute 'path' to it.
+gron transforms JSON into discrete assignments to make it easier to `grep` for what you want and see the absolute 'path' to it.
 It eases the exploration of APIs that return large blobs of JSON but have terrible documentation.
+
+gron has no runtime dependencies. You can just [download a binary for Linux or Mac and run it](https://github.com/tomnomnom/gron/releases).
+Put the binary in your `$PATH` to make things easy on yourself.
 
 ## Usage
 
@@ -64,6 +67,16 @@ The output of `gron` is valid JavaScript:
   name: 'Tom' }
 ```
 
+## Installation
+
+If you're a Go user you can just use `go get`:
+
+```
+▶ go get github.com/tomnomnom/gron
+```
+
+Or you can download a binary from the [releases page](https://github.com/tomnomnom/gron/releases).
+
 ## Get Help
 
 ```
@@ -87,12 +100,16 @@ Examples:
   curl -s http://headers.jsontest.com/ | gron
 ```
 
-## Installation
+## FAQ
+### Wasn't this written in PHP before?
+Yes it was! The original version is [preserved here for posterity](https://github.com/tomnomnom/gron/blob/master/original-gron.php).
 
-If you're a Go user you can just use `go get`:
+### Why the change to Go?
+Mostly to remove PHP as a dependency. There's a lot of people who work with JSON who don't have PHP installed.
 
-```
-▶ go get github.com/tomnomnom/gron
-```
+### Why shouldn't I just use jq?
+[jq](https://stedolan.github.io/jq/) is *awesome*, and a lot more powerful than gron, but with that power comes
+complexity. gron aims to make it easier to use the tools you already know, like `grep` and `sed`.
 
-Or you can download a binary from the [releases page](https://github.com/tomnomnom/gron/releases).
+gron's primary purpose is to make it easy to find the path to a value in a deeply nested JSON blob
+when you don't already know the structure; jq's power is unlocked only once you know that structure.
