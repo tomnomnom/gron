@@ -112,4 +112,4 @@ Mostly to remove PHP as a dependency. There's a lot of people who work with JSON
 complexity. gron aims to make it easier to use the tools you already know, like `grep` and `sed`.
 
 gron's primary purpose is to make it easy to find the path to a value in a deeply nested JSON blob
-when you don't already know the structure; jq's power is unlocked only once you know that structure.
+when you don't already know the structure; much of jq's power is unlocked only once you know that structure.
