@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.5
+- Adds scripted builds for darwin on amd64
+
+## 0.1.4
+- Minor changes to release script
+
+## 0.1.3
+- Releases are now tarballs
+
 ## 0.1.2
 - Underscores no-longer cause keys to be quoted
 - HTTP requests are now done with `Accept: application/json`
