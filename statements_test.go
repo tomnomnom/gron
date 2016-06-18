@@ -87,6 +87,7 @@ func TestKeyMustBeQuoted(t *testing.T) {
 		{"dotted", false},
 		{"dotted123", false},
 		{"_under_scores", false},
+		{"ಠ_ಠ", false},
 
 		// Invalid chars
 		{"is-quoted", true},
@@ -103,5 +104,104 @@ func TestKeyMustBeQuoted(t *testing.T) {
 		if have != test.want {
 			t.Errorf("Want %t for keyMustBeQuoted(%s); have %t", test.want, test.key, have)
 		}
+	}
+}
+
+func TestValidFirstRune(t *testing.T) {
+	tests := []struct {
+		in   rune
+		want bool
+	}{
+		{'r', true},
+		{'ಠ', true},
+		{'4', false},
+		{'-', false},
+	}
+
+	for _, test := range tests {
+		have := validFirstRune(test.in)
+		if have != test.want {
+			t.Errorf("Want %t for validFirstRune(%#U); have %t", test.want, test.in, have)
+		}
+	}
+}
+
+func TestValidSecondaryRune(t *testing.T) {
+	tests := []struct {
+		in   rune
+		want bool
+	}{
+		{'r', true},
+		{'ಠ', true},
+		{'4', true},
+		{'-', false},
+	}
+
+	for _, test := range tests {
+		have := validSecondaryRune(test.in)
+		if have != test.want {
+			t.Errorf("Want %t for validSecondaryRune(%#U); have %t", test.want, test.in, have)
+		}
+	}
+}
+
+func BenchmarkKeyMustBeQuoted(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		keyMustBeQuoted("must-be-quoted")
+	}
+}
+
+func BenchmarkKeyMustBeQuotedUnquoted(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		keyMustBeQuoted("canbeunquoted")
+	}
+}
+
+func BenchmarkKeyMustBeQuotedReserved(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		keyMustBeQuoted("function")
+	}
+}
+
+func BenchmarkMakeStatements(b *testing.B) {
+	j := []byte(`{
+		"dotted": "A dotted value",
+		"a quoted": "value",
+		"bool1": true,
+		"bool2": false,
+		"anull": null,
+		"anarr": [1, 1.5],
+		"anob": {
+			"foo": "bar"
+		},
+		"else": 1
+	}`)
+
+	var top interface{}
+	err := json.Unmarshal(j, &top)
+	if err != nil {
+		b.Fatalf("Failed to unmarshal test file: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		_, _ = makeStatements("json", top)
+	}
+}
+
+func BenchmarkMakePrefixUnquoted(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = makePrefix("json", "isunquoted")
+	}
+}
+
+func BenchmarkMakePrefixQuoted(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = makePrefix("json", "this-is-quoted")
+	}
+}
+
+func BenchmarkMakePrefixInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = makePrefix("json", 212)
 	}
 }

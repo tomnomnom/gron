@@ -2,3 +2,6 @@ gron
 *.tgz
 *.swp
 *.exe
+cpu.out
+gron.test
+

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+- Adds proper handling of key quoting using Unicode ranges
+- Adds basic benchmarks
+- Adds profiling script
+
 ## 0.1.5
 - Adds scripted builds for darwin on amd64
 

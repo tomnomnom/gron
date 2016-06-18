@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
+	"unicode"
 )
 
 // The javascript reserved words cannot be used as unquoted keys
@@ -159,18 +159,46 @@ func formatValue(s interface{}) string {
 //     a key with spaces      -> true
 //     1startsWithANumber	  -> true
 func keyMustBeQuoted(s string) bool {
-	r := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
-	if !r.MatchString(s) {
-		return true
-	}
-
-	// Check the list of reserved words
+	// Check the list of reserved words first
+	// to avoid more expensive checks where possible
 	for _, i := range reservedWords {
 		if s == i {
 			return true
 		}
 	}
+
+	for i, r := range s {
+		if i == 0 && !validFirstRune(r) {
+			return true
+		}
+		if !validSecondaryRune(r) {
+			return true
+		}
+	}
+
 	return false
+}
+
+// validFirstRune returns true for runes that are valid
+// as the first rune in a key.
+// E.g:
+//     'r' -> true
+//     '7' -> false
+func validFirstRune(r rune) bool {
+	return unicode.In(r,
+		unicode.Lu,
+		unicode.Ll,
+		unicode.Lm,
+		unicode.Lo,
+		unicode.Nl,
+	) || r == '$' || r == '_'
+}
+
+// validSecondaryRune returns true for runes that are valid
+// as anything other than the first rune in a key.
+func validSecondaryRune(r rune) bool {
+	return validFirstRune(r) ||
+		unicode.In(r, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)
 }
 
 // makePrefix takes the previous prefix and the next key and
@@ -181,9 +209,11 @@ func makePrefix(prev string, next interface{}) (string, error) {
 		return fmt.Sprintf("%s[%d]", prev, v), nil
 	case string:
 		if keyMustBeQuoted(v) {
-			return fmt.Sprintf("%s[%s]", prev, formatValue(v)), nil
+			// This is a fairly hot code path, and concatination has
+			// proven to be faster than fmt.Sprintf, despite the allocations
+			return prev + "[" + formatValue(v) + "]", nil
 		}
-		return fmt.Sprintf("%s.%s", prev, v), nil
+		return prev + "." + v, nil
 	default:
 		return "", fmt.Errorf("could not form prefix for %#v", next)
 	}
