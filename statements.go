@@ -171,7 +171,7 @@ func keyMustBeQuoted(s string) bool {
 		if i == 0 && !validFirstRune(r) {
 			return true
 		}
-		if !validSecondaryRune(r) {
+		if i != 0 && !validSecondaryRune(r) {
 			return true
 		}
 	}
