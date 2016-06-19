@@ -18,7 +18,7 @@ Put the binary in your `$PATH` (e.g. in `/usr/bin`) to make it easy to use:
 Or if you're a Go user you can use `go get`:
 
 ```
-▶ go get github.com/tomnomnom/gron
+▶ go get -u github.com/tomnomnom/gron
 ```
 
 ## Usage
@@ -45,7 +45,7 @@ From a URL:
 ▶ gron http://headers.jsontest.com/
 json = {};
 json.Host = "headers.jsontest.com";
-json["User-Agent"] = "Go-http-client/1.1";
+json["User-Agent"] = "gron/0.1";
 json["X-Cloud-Trace-Context"] = "6917a823919477919dbc1523584ba25d/11970839830843610056";
 ```
 
