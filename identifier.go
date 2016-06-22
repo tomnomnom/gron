@@ -3,43 +3,43 @@ package main
 import "unicode"
 
 // The javascript reserved words cannot be used as unquoted keys
-var reservedWords = []string{
-	"break",
-	"case",
-	"catch",
-	"class",
-	"const",
-	"continue",
-	"debugger",
-	"default",
-	"delete",
-	"do",
-	"else",
-	"export",
-	"extends",
-	"false",
-	"finally",
-	"for",
-	"function",
-	"if",
-	"import",
-	"in",
-	"instanceof",
-	"new",
-	"null",
-	"return",
-	"super",
-	"switch",
-	"this",
-	"throw",
-	"true",
-	"try",
-	"typeof",
-	"var",
-	"void",
-	"while",
-	"with",
-	"yield",
+var reservedWords = map[string]bool{
+	"break":      true,
+	"case":       true,
+	"catch":      true,
+	"class":      true,
+	"const":      true,
+	"continue":   true,
+	"debugger":   true,
+	"default":    true,
+	"delete":     true,
+	"do":         true,
+	"else":       true,
+	"export":     true,
+	"extends":    true,
+	"false":      true,
+	"finally":    true,
+	"for":        true,
+	"function":   true,
+	"if":         true,
+	"import":     true,
+	"in":         true,
+	"instanceof": true,
+	"new":        true,
+	"null":       true,
+	"return":     true,
+	"super":      true,
+	"switch":     true,
+	"this":       true,
+	"throw":      true,
+	"true":       true,
+	"try":        true,
+	"typeof":     true,
+	"var":        true,
+	"void":       true,
+	"while":      true,
+	"with":       true,
+	"yield":      true,
 }
 
 // validIdentifier checks to see if a string is a valid
@@ -49,6 +49,10 @@ var reservedWords = []string{
 //     a key with spaces      -> false
 //     1startsWithANumber	  -> false
 func validIdentifier(s string) bool {
+	if reservedWords[s] {
+		return false
+	}
+
 	for i, r := range s {
 		if i == 0 && !validFirstRune(r) {
 			return false
@@ -58,18 +62,11 @@ func validIdentifier(s string) bool {
 		}
 	}
 
-	// Check the list of reserved words
-	for _, i := range reservedWords {
-		if s == i {
-			return false
-		}
-	}
-
 	return true
 }
 
 // validFirstRune returns true for runes that are valid
-// as the first rune in a key.
+// as the first rune in an identifier.
 // E.g:
 //     'r' -> true
 //     '7' -> false
@@ -84,7 +81,7 @@ func validFirstRune(r rune) bool {
 }
 
 // validSecondaryRune returns true for runes that are valid
-// as anything other than the first rune in a key.
+// as anything other than the first rune in an identifier.
 func validSecondaryRune(r rune) bool {
 	return validFirstRune(r) ||
 		unicode.In(r, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)
