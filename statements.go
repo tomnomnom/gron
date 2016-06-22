@@ -3,48 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"unicode"
 )
-
-// The javascript reserved words cannot be used as unquoted keys
-var reservedWords = []string{
-	"break",
-	"case",
-	"catch",
-	"class",
-	"const",
-	"continue",
-	"debugger",
-	"default",
-	"delete",
-	"do",
-	"else",
-	"export",
-	"extends",
-	"false",
-	"finally",
-	"for",
-	"function",
-	"if",
-	"import",
-	"in",
-	"instanceof",
-	"new",
-	"null",
-	"return",
-	"super",
-	"switch",
-	"this",
-	"throw",
-	"true",
-	"try",
-	"typeof",
-	"var",
-	"void",
-	"while",
-	"with",
-	"yield",
-}
 
 // statements is a list of assignment statements.
 // E.g statement: json.foo = "bar";
@@ -152,55 +111,6 @@ func formatValue(s interface{}) string {
 	return string(out)
 }
 
-// keyMustBeQuoted checks to see if a key in a JSON object
-// must be quoted or not.
-// E.g:
-//     justLettersAndNumbers1 -> false
-//     a key with spaces      -> true
-//     1startsWithANumber	  -> true
-func keyMustBeQuoted(s string) bool {
-	// Check the list of reserved words first
-	// to avoid more expensive checks where possible
-	for _, i := range reservedWords {
-		if s == i {
-			return true
-		}
-	}
-
-	for i, r := range s {
-		if i == 0 && !validFirstRune(r) {
-			return true
-		}
-		if i != 0 && !validSecondaryRune(r) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// validFirstRune returns true for runes that are valid
-// as the first rune in a key.
-// E.g:
-//     'r' -> true
-//     '7' -> false
-func validFirstRune(r rune) bool {
-	return unicode.In(r,
-		unicode.Lu,
-		unicode.Ll,
-		unicode.Lm,
-		unicode.Lo,
-		unicode.Nl,
-	) || r == '$' || r == '_'
-}
-
-// validSecondaryRune returns true for runes that are valid
-// as anything other than the first rune in a key.
-func validSecondaryRune(r rune) bool {
-	return validFirstRune(r) ||
-		unicode.In(r, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)
-}
-
 // makePrefix takes the previous prefix and the next key and
 // returns a new prefix or an error on failure
 func makePrefix(prev string, next interface{}) (string, error) {
@@ -208,12 +118,12 @@ func makePrefix(prev string, next interface{}) (string, error) {
 	case int:
 		return fmt.Sprintf("%s[%d]", prev, v), nil
 	case string:
-		if keyMustBeQuoted(v) {
+		if validIdentifier(v) {
 			// This is a fairly hot code path, and concatination has
 			// proven to be faster than fmt.Sprintf, despite the allocations
-			return prev + "[" + formatValue(v) + "]", nil
+			return prev + "." + v, nil
 		}
-		return prev + "." + v, nil
+		return prev + "[" + formatValue(v) + "]", nil
 	default:
 		return "", fmt.Errorf("could not form prefix for %#v", next)
 	}
