@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"unicode"
+	"unicode/utf8"
 )
 
 // statements is a list of assignment statements.
@@ -30,8 +34,75 @@ func (ss statements) Swap(i, j int) {
 }
 
 // Less compares two statements for sort.Sort
-func (ss statements) Less(i, j int) bool {
-	return ss[i] < ss[j]
+// A limited kind of natural sort to keep array indexes in order
+func (ss statements) Less(a, b int) bool {
+
+	// Two statements should never be identical, but I can't bring
+	// myself not to guard against the possibility
+	if ss[a] == ss[b] {
+		return true
+	}
+
+	// Run through the strings until we find a difference, tracking
+	// where numbers start in both strings
+	var ra, rb rune
+
+	numStart := -1
+	for i, w := 0, 0; i < len(ss[a]); i += w {
+		ra, w = utf8.DecodeRuneInString(ss[a][i:])
+
+		// Check there's actually enough bytes left in
+		// string B to get another rune
+		if i > len(ss[b]) {
+			return true
+		}
+
+		rb, _ = utf8.DecodeRuneInString(ss[b][i:])
+
+		// If we've hit the start of a number in both strings we
+		// need to keep track of where the numbers start
+		if numStart == -1 && unicode.IsNumber(ra) && unicode.IsNumber(rb) {
+			numStart = i
+		}
+
+		// Found a difference
+		if ra != rb {
+			break
+		}
+
+		// If there's no difference, and the runes aren't numbers then
+		// reset numStart so we can spot the start of the next number
+		if !unicode.IsNumber(ra) {
+			numStart = -1
+		}
+	}
+
+	// If both the runes aren't numbers just compare the two runes
+	if numStart == -1 {
+		return ra < rb
+	}
+
+	// Read and compare the numbers from each string
+	return readNum(ss[a][numStart:]) < readNum(ss[b][numStart:])
+}
+
+// readNum reads digits from a string until it hits a non-digit,
+// returning the digits as an integer
+func readNum(str string) int {
+	buf := bytes.Buffer{}
+	for _, r := range str {
+		if !unicode.IsNumber(r) {
+			break
+		}
+
+		// WriteRune's error is always nil
+		_, _ = buf.WriteRune(r)
+	}
+
+	// If we've failed to parse a number then zero is
+	// just fine; it's being used for sorting only
+	num, _ := strconv.Atoi(buf.String())
+	return num
 }
 
 // Contains seaches the statements for a given statement

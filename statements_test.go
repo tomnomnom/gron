@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 )
 
@@ -74,6 +75,38 @@ func TestPrefixHappy(t *testing.T) {
 		}
 		if r != test.want {
 			t.Errorf("Want %s from makePrefix(%s, %#v); have: %s", test.want, test.prev, test.next, r)
+		}
+	}
+}
+
+func TestStatementSorting(t *testing.T) {
+	want := statements{
+		`json.a = true;`,
+		`json.b = true;`,
+		`json.c[0] = true;`,
+		`json.c[2] = true;`,
+		`json.c[10] = true;`,
+		`json.c[11] = true;`,
+		`json.c[21][2] = true;`,
+		`json.c[21][11] = true;`,
+	}
+
+	have := statements{
+		`json.c[11] = true;`,
+		`json.c[21][2] = true;`,
+		`json.c[0] = true;`,
+		`json.c[2] = true;`,
+		`json.b = true;`,
+		`json.c[10] = true;`,
+		`json.c[21][11] = true;`,
+		`json.a = true;`,
+	}
+
+	sort.Sort(have)
+
+	for i := range want {
+		if have[i] != want[i] {
+			t.Errorf("Statements sorted incorrectly; want `%s` at index %d, have `%s`", want[i], i, have[i])
 		}
 	}
 }

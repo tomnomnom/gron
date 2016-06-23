@@ -73,8 +73,8 @@ func main() {
 		fatal(exitReadInput, "failed to read input", err)
 	}
 
-	// The 'JSON' might be an object, array or scalar,
-	// so the best we can do for now is an empty interface type
+	// The 'JSON' might be an object, array or scalar, so the
+	// best we can do for now is an empty interface type
 	var top interface{}
 
 	err = json.Unmarshal(b, &top)
@@ -87,6 +87,8 @@ func main() {
 		fatal(exitFormStatements, "failed to form statements", err)
 	}
 
+	// Go's maps do not have well-defined ordering, but we want a consistent
+	// output for a given input, so we must sort the statements
 	sort.Sort(ss)
 
 	for _, s := range ss {
