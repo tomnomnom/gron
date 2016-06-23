@@ -33,7 +33,7 @@ func (ss statements) Swap(i, j int) {
 }
 
 // Less compares two statements for sort.Sort
-// A limited kind of natural sort to keep array indexes in order
+// Implements a natural sort to keep array indexes in order
 func (ss statements) Less(a, b int) bool {
 
 	// Two statements should never be identical, but I can't bring
@@ -42,43 +42,46 @@ func (ss statements) Less(a, b int) bool {
 		return true
 	}
 
-	// Run through the strings until we find a difference, tracking
-	// where numbers start in both strings
-	var ra, rb rune
-
+	// Find where the two strings start to differ, keeping track
+	// of where any numbers start so that we can compare them properly
 	numStart := -1
-	for i, w := 0, 0; i < len(ss[a]); i += w {
-		ra, w = utf8.DecodeRuneInString(ss[a][i:])
+	diffStart := -1
+	for i, ra := range ss[a] {
+		rb, _ := utf8.DecodeRuneInString(ss[b][i:])
 
-		// Check there's actually enough bytes left in
-		// string B to get another rune
-		if i > len(ss[b]) {
-			return true
-		}
+		// Are we looking at a number?
+		isNum := unicode.IsNumber(ra) && unicode.IsNumber(rb)
 
-		rb, _ = utf8.DecodeRuneInString(ss[b][i:])
-
-		// If we've hit the start of a number in both strings we
-		// need to keep track of where the numbers start
-		if numStart == -1 && unicode.IsNumber(ra) && unicode.IsNumber(rb) {
+		// If we are looking at a number but don't have a start
+		// position then this is the start of a new number
+		if isNum && numStart == -1 {
 			numStart = i
 		}
 
 		// Found a difference
 		if ra != rb {
+			diffStart = i
 			break
 		}
 
-		// If there's no difference, and the runes aren't numbers then
-		// reset numStart so we can spot the start of the next number
-		if !unicode.IsNumber(ra) {
+		// There was no difference yet, so if we're not looking at a
+		// number: reset numStart so we start looking again
+		if !isNum {
 			numStart = -1
 		}
 	}
 
-	// If both the runes aren't numbers just compare the two runes
+	// If diffStart is still -1 then the only difference must be
+	// that string B is longer than A, so A should come first
+	if diffStart == -1 {
+		return true
+	}
+
+	// If we don't have a start position for a number, that means the
+	// difference we found wasn't numeric, so do a regular comparison
+	// on the remainder of the strings
 	if numStart == -1 {
-		return ra < rb
+		return ss[a][diffStart:] < ss[b][diffStart:]
 	}
 
 	// Read and compare the numbers from each string
@@ -88,16 +91,19 @@ func (ss statements) Less(a, b int) bool {
 // readNum reads digits from a string until it hits a non-digit,
 // returning the digits as an integer
 func readNum(str string) int {
+	numEnd := len(str)
 	for i, r := range str {
+		// If we hit a non-number then we've found the end
 		if !unicode.IsNumber(r) {
-			// If we've failed to parse a number then zero is
-			// just fine; it's being used for sorting only
-			num, _ := strconv.Atoi(str[:i])
-			return num
+			numEnd = i
+			break
 		}
 
 	}
-	return 0
+	// If we've failed to parse a number then zero is
+	// just fine; it's being used for sorting only
+	num, _ := strconv.Atoi(str[:numEnd])
+	return num
 }
 
 // Contains seaches the statements for a given statement

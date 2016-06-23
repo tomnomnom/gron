@@ -79,7 +79,7 @@ func TestPrefixHappy(t *testing.T) {
 	}
 }
 
-func TestStatementSorting(t *testing.T) {
+func TestStatementsSorting(t *testing.T) {
 	want := statements{
 		`json.a = true;`,
 		`json.b = true;`,
@@ -108,6 +108,144 @@ func TestStatementSorting(t *testing.T) {
 		if have[i] != want[i] {
 			t.Errorf("Statements sorted incorrectly; want `%s` at index %d, have `%s`", want[i], i, have[i])
 		}
+	}
+}
+
+// A cheeky check of statements sorting using some of Dave Koelle's Alphanum test data
+// See here: http://www.davekoelle.com/alphanum.html
+func TestStatementsSortAlphanum(t *testing.T) {
+	have := statements{
+		"1000X Radonius Maximus",
+		"10X Radonius",
+		"200X Radonius",
+		"20X Radonius",
+		"20X Radonius Prime",
+		"30X Radonius",
+		"40X Radonius",
+		"Allegia 50 Clasteron",
+		"Allegia 500 Clasteron",
+		"Allegia 50B Clasteron",
+		"Allegia 51 Clasteron",
+		"Allegia 6R Clasteron",
+		"Alpha 100",
+		"Alpha 2",
+		"Alpha 200",
+		"Alpha 2A",
+		"Alpha 2A-8000",
+		"Alpha 2A-900",
+		"Callisto Morphamax",
+		"Callisto Morphamax 500",
+		"Callisto Morphamax 5000",
+		"Callisto Morphamax 600",
+		"Callisto Morphamax 6000 SE",
+		"Callisto Morphamax 6000 SE2",
+		"Callisto Morphamax 700",
+		"Callisto Morphamax 7000",
+		"Xiph Xlater 10000",
+		"Xiph Xlater 2000",
+		"Xiph Xlater 300",
+		"Xiph Xlater 40",
+		"Xiph Xlater 5",
+		"Xiph Xlater 50",
+		"Xiph Xlater 500",
+		"Xiph Xlater 5000",
+		"Xiph Xlater 58",
+	}
+	want := statements{
+		"10X Radonius",
+		"20X Radonius",
+		"20X Radonius Prime",
+		"30X Radonius",
+		"40X Radonius",
+		"200X Radonius",
+		"1000X Radonius Maximus",
+		"Allegia 6R Clasteron",
+		"Allegia 50 Clasteron",
+		"Allegia 50B Clasteron",
+		"Allegia 51 Clasteron",
+		"Allegia 500 Clasteron",
+		"Alpha 2",
+		"Alpha 2A",
+		"Alpha 2A-900",
+		"Alpha 2A-8000",
+		"Alpha 100",
+		"Alpha 200",
+		"Callisto Morphamax",
+		"Callisto Morphamax 500",
+		"Callisto Morphamax 600",
+		"Callisto Morphamax 700",
+		"Callisto Morphamax 5000",
+		"Callisto Morphamax 6000 SE",
+		"Callisto Morphamax 6000 SE2",
+		"Callisto Morphamax 7000",
+		"Xiph Xlater 5",
+		"Xiph Xlater 40",
+		"Xiph Xlater 50",
+		"Xiph Xlater 58",
+		"Xiph Xlater 300",
+		"Xiph Xlater 500",
+		"Xiph Xlater 2000",
+		"Xiph Xlater 5000",
+		"Xiph Xlater 10000",
+	}
+
+	sort.Sort(have)
+
+	for i := range want {
+		if have[i] != want[i] {
+			t.Errorf("Statements sorted incorrectly; want `%s` at index %d, have `%s`", want[i], i, have[i])
+		}
+	}
+}
+
+func TestStatementLess(t *testing.T) {
+	ss := statements{
+		"1",
+		"2",
+		"20",
+		"Alpha 2",
+		"Alpha 2AA",
+		"Xiph Xlater 50",
+		"Xiph Xlater 58",
+		"200X Radonius",
+		"20X Radonius",
+	}
+
+	cases := []struct {
+		a    int
+		b    int
+		want bool
+	}{
+		{0, 1, true},
+		{3, 4, true},
+		{4, 3, false},
+		{2, 1, false},
+		{5, 6, true},
+		{6, 5, false},
+		{0, 5, true},
+		{5, 0, false},
+		{7, 8, false},
+		{8, 7, true},
+	}
+
+	for _, c := range cases {
+		have := ss.Less(c.a, c.b)
+
+		if have != c.want {
+			t.Errorf("`%s` < `%s` should be %t but isn't", ss[c.a], ss[c.b], c.want)
+		}
+	}
+
+}
+
+func BenchmarkStatementsLess(b *testing.B) {
+	ss := statements{
+		`json.c[21][2] = true;`,
+		`json.c[21][11] = true;`,
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = ss.Less(0, 1)
 	}
 }
 
@@ -151,16 +289,5 @@ func BenchmarkMakePrefixQuoted(b *testing.B) {
 func BenchmarkMakePrefixInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = makePrefix("json", 212)
-	}
-}
-
-func BenchmarkStatementsLess(b *testing.B) {
-	ss := statements{
-		`json.c[21][2] = true;`,
-		`json.c[21][11] = true;`,
-	}
-
-	for i := 0; i < b.N; i++ {
-		_ = ss.Less(0, 1)
 	}
 }
