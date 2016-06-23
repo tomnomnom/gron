@@ -153,3 +153,14 @@ func BenchmarkMakePrefixInt(b *testing.B) {
 		_, _ = makePrefix("json", 212)
 	}
 }
+
+func BenchmarkStatementsLess(b *testing.B) {
+	ss := statements{
+		`json.c[21][2] = true;`,
+		`json.c[21][11] = true;`,
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = ss.Less(0, 1)
+	}
+}

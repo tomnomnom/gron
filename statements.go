@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -89,20 +88,16 @@ func (ss statements) Less(a, b int) bool {
 // readNum reads digits from a string until it hits a non-digit,
 // returning the digits as an integer
 func readNum(str string) int {
-	buf := bytes.Buffer{}
-	for _, r := range str {
+	for i, r := range str {
 		if !unicode.IsNumber(r) {
-			break
+			// If we've failed to parse a number then zero is
+			// just fine; it's being used for sorting only
+			num, _ := strconv.Atoi(str[:i])
+			return num
 		}
 
-		// WriteRune's error is always nil
-		_, _ = buf.WriteRune(r)
 	}
-
-	// If we've failed to parse a number then zero is
-	// just fine; it's being used for sorting only
-	num, _ := strconv.Atoi(buf.String())
-	return num
+	return 0
 }
 
 // Contains seaches the statements for a given statement
