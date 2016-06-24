@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.7
+- Fixes sorting of array keys; now uses natural sort
+
 ## 0.1.6
 - Adds proper handling of key quoting using Unicode ranges
 - Adds basic benchmarks
