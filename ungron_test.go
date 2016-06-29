@@ -2,51 +2,72 @@ package main
 
 import "testing"
 
-func TestNextIdentifier(t *testing.T) {
-
+func TestLex(t *testing.T) {
 	cases := []struct {
 		in   string
-		want string
-		err  error
+		want []token
 	}{
-		// Generic error conditions
-		{"", "", errEmptyStatement},
-		{" = 1;", "", errIdentEnd},
-		{"= 1;", "", errIdentEnd},
-		{"!= 1;", "", errBadIdentStart},
+		{`json.foo = 1;`, []token{
+			{`json`, typBare},
+			{`foo`, typBare},
+			{`1`, typValue},
+		}},
 
-		// Bare identifiers
-		{`json`, ``, errBadBareIdent},
-		{`json.foo = 1;`, `json`, nil},
-		{`json["foo"] = 1;`, `json`, nil},
-		{`json[0] = 1;`, `json`, nil},
+		{`json.foo = "bar";`, []token{
+			{`json`, typBare},
+			{`foo`, typBare},
+			{`"bar"`, typValue},
+		}},
 
-		// Array keys
-		{`[1foo] = 1;`, ``, errNonNumArrayKey},
-		{`[0`, ``, errBadArrayKey},
-		{`[0] = 1;`, `0`, nil},
+		{`json[0] = "bar";`, []token{
+			{`json`, typBare},
+			{`0`, typNumeric},
+			{`"bar"`, typValue},
+		}},
 
-		// Quoted keys
-		{`["foo] = 1;`, ``, errBadQuotedKey},
-		{`['foo] = 1;`, ``, errBadQuotedKey},
-		{`[foo] = 1;`, ``, errBadQuotedKey},
-		{`[foo"] = 1;`, ``, errBadQuotedKey},
-		{`[foo'] = 1;`, ``, errBadQuotedKey},
-		{`['foo'] = 1;`, ``, errBadQuotedKey},
-		{`["foo"] = 1;`, `foo`, nil},
-		{`["f\"oo"] = 1;`, `f\"oo`, nil},
-		{`["f\"oo"] = 1;`, `f\"oo`, nil},
+		{`json["foo"] = "bar";`, []token{
+			{`json`, typBare},
+			{`"foo"`, typQuoted},
+			{`"bar"`, typValue},
+		}},
+
+		{`json.foo["bar"][0] = "bar";`, []token{
+			{`json`, typBare},
+			{`foo`, typBare},
+			{`"bar"`, typQuoted},
+			{`0`, typNumeric},
+			{`"bar"`, typValue},
+		}},
+
+		{`not an identifier at all`, []token{
+			{`not`, typBare},
+		}},
+
+		{`alsonotanidentifier`, []token{
+			{`alsonotanidentifier`, typBare},
+		}},
+
+		{`wat!`, []token{
+			{`wat`, typBare},
+		}},
 	}
 
 	for _, c := range cases {
-		have, err := nextIdentifier(c.in)
+		l := newLexer(c.in)
+		have := l.lex()
 
-		if have != c.want {
-			t.Errorf("Want `%s` but have `%s` for nextIdentifier(%s)", c.want, have, c.in)
+		if len(have) != len(c.want) {
+			t.Logf("Want: %#v", c.want)
+			t.Logf("Have: %#v", have)
+			t.Fatalf("want %d tokens, have %d", len(c.want), len(have))
 		}
 
-		if err != c.err {
-			t.Errorf("Want error `%s` but have `%s` for nextIdentifier(%s)", c.err, err, c.in)
+		for i := range have {
+			if have[i] != c.want[i] {
+				t.Logf("Want: %#v", c.want)
+				t.Logf("Have: %#v", have)
+				t.Errorf("Want `%#v` in position %d, have `%#v`", c.want[i], i, have[i])
+			}
 		}
 	}
 }
