@@ -10,4 +10,4 @@ if [ $? -ne 0 ]; then
     gometalinter --install
 fi
 
-gometalinter --disable=gocyclo --disable=dupl
+gometalinter --disable=gocyclo --disable=dupl --disable=deadcode
