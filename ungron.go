@@ -254,6 +254,9 @@ func lexValue(l *lexer) lexFn {
 
 // ungronTokens turns a slice of tokens into an actual datastructure
 func ungronTokens(ts []token) (interface{}, error) {
+	if len(ts) == 0 {
+		return nil, fmt.Errorf("zero tokens provided to ungronTokens")
+	}
 	if ts[len(ts)-1].typ != typValue {
 		return nil, fmt.Errorf("last token in slice is not a value")
 	}

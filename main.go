@@ -71,19 +71,26 @@ func main() {
 		}
 	}
 
+	var exitCode int
+	var err error
 	if *ungronFlag {
-		ungron(raw)
+		exitCode, err = ungron(raw, os.Stdout)
 	} else {
-		gron(raw)
+		exitCode, err = gron(raw, os.Stdout)
 	}
 
+	if exitCode != exitOK {
+		fatal(exitCode, "Fatal", err)
+	}
+
+	os.Exit(exitOK)
 }
 
-func gron(r io.Reader) {
+func gron(r io.Reader, w io.Writer) (int, error) {
 
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		fatal(exitReadInput, "failed to read input", err)
+		return exitReadInput, fmt.Errorf("failed to read input: %s", err)
 	}
 
 	// The 'JSON' might be an object, array or scalar, so the
@@ -92,12 +99,12 @@ func gron(r io.Reader) {
 
 	err = json.Unmarshal(b, &top)
 	if err != nil {
-		fatal(exitJSONDecode, "failed to decode JSON", err)
+		return exitJSONDecode, fmt.Errorf("failed to decode JSON: %s", err)
 	}
 
 	ss, err := makeStatements("json", top)
 	if err != nil {
-		fatal(exitFormStatements, "failed to form statements", err)
+		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
 	}
 
 	// Go's maps do not have well-defined ordering, but we want a consistent
@@ -105,13 +112,13 @@ func gron(r io.Reader) {
 	sort.Sort(ss)
 
 	for _, s := range ss {
-		fmt.Println(s)
+		fmt.Fprintln(w, s)
 	}
 
-	os.Exit(exitOK)
+	return exitOK, nil
 }
 
-func ungron(r io.Reader) {
+func ungron(r io.Reader, w io.Writer) (int, error) {
 	scanner := bufio.NewScanner(r)
 
 	// Get all the idividually parsed statements
@@ -121,7 +128,7 @@ func ungron(r io.Reader) {
 		u, err := ungronTokens(l.lex())
 
 		if err != nil {
-			fatal(exitUnknown, "TODO: Add proper error for ungron tokens", err)
+			return exitUnknown, fmt.Errorf("failed to translate tokens into datastructure: %s", err)
 		}
 
 		parsed = append(parsed, u)
@@ -129,14 +136,14 @@ func ungron(r io.Reader) {
 	// TODO: Handle any scanner errors
 
 	if len(parsed) == 0 {
-		fatal(exitUnknown, "TODO: Add proper error for no parsed statements", nil)
+		return exitUnknown, fmt.Errorf("no statements were parsed")
 	}
 
 	merged := parsed[0]
 	for _, p := range parsed[1:] {
 		m, err := recursiveMerge(merged, p)
 		if err != nil {
-			fatal(exitUnknown, "TODO: Add proper error for merging statements", err)
+			return exitUnknown, fmt.Errorf("failed to merge statements: %s", err)
 		}
 		merged = m
 	}
@@ -153,13 +160,12 @@ func ungron(r io.Reader) {
 
 	j, err := json.MarshalIndent(merged, "", "  ")
 	if err != nil {
-		fatal(exitUnknown, "TODO: Add proper error for JSON marshal failure", err)
+		return exitUnknown, fmt.Errorf("failed to convert statements to JSON: %s", err)
 	}
 
-	fmt.Printf("%s\n", j)
+	fmt.Fprintf(w, "%s\n", j)
 
-	os.Exit(exitOK)
-
+	return exitOK, nil
 }
 
 func fatal(code int, msg string, err error) {
