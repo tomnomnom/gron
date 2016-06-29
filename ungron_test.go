@@ -71,3 +71,64 @@ func TestLex(t *testing.T) {
 		}
 	}
 }
+
+func TestUngronTokens(t *testing.T) {
+	in := `json.contact["e-mail"][0] = "mail@tomnomnom.com";`
+	l := newLexer(in)
+	tokens := l.lex()
+
+	have, err := ungronTokens(tokens)
+	if err != nil {
+		t.Fatalf("failed to ungron statement: %s", err)
+	}
+
+	t.Logf("Have: %#v", have)
+
+	top, ok := have.(map[string]interface{})
+	if !ok {
+		t.Fatalf("failed to convert top level to map[string]interface{}")
+	}
+
+	rawJ, ok := top["json"]
+	if !ok {
+		t.Fatalf("top level should have key 'json' but doesn't")
+	}
+
+	j, ok := rawJ.(map[string]interface{})
+	if !ok {
+		t.Fatalf("failed to convert json level to map[string]interface{}")
+	}
+
+	rawContact, ok := j["contact"]
+	if !ok {
+		t.Fatalf("json should have key 'contact' but doesn't")
+	}
+
+	contact, ok := rawContact.(map[string]interface{})
+	if !ok {
+		t.Fatalf("failed to convert contact to map[string]interface{}")
+	}
+
+	rawEmail, ok := contact["e-mail"]
+	if !ok {
+		t.Fatalf("contact should have key 'e-mail' but doesn't")
+	}
+
+	email, ok := rawEmail.([]interface{})
+	if !ok {
+		t.Fatalf("failed to convert email to []interface{}")
+	}
+
+	if len(email) != 1 {
+		t.Fatalf("want length 1 for email but have %d", len(email))
+	}
+
+	addr, ok := email[0].(string)
+	if !ok {
+		t.Fatalf("failed to convert email address to string")
+	}
+
+	if addr != "mail@tomnomnom.com" {
+		t.Fatalf("Want `mail@tomnomnom.com`; have `%s`", addr)
+	}
+}

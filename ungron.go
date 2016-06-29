@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -247,4 +249,58 @@ func lexValue(l *lexer) lexFn {
 	l.acceptUntil(";")
 	l.emit(typValue)
 	return nil
+}
+
+// ungronTokens turns a slice of tokens into an actual datastructure
+func ungronTokens(ts []token) (interface{}, error) {
+	if ts[len(ts)-1].typ != typValue {
+		return nil, fmt.Errorf("last token in slice is not a value")
+	}
+
+	t := ts[0]
+	switch t.typ {
+
+	case typValue:
+		var val interface{}
+		err := json.Unmarshal([]byte(t.text), &val)
+		if err != nil {
+			return nil, fmt.Errorf("failed to handle quoted key `%s`", t.text)
+		}
+		return val, nil
+
+	case typBare:
+		out := make(map[string]interface{})
+		val, err := ungronTokens(ts[1:])
+		if err != nil {
+			return nil, err
+		}
+		out[t.text] = val
+		return out, nil
+
+	case typQuoted:
+		out := make(map[string]interface{})
+		val, err := ungronTokens(ts[1:])
+		if err != nil {
+			return nil, err
+		}
+		key := ""
+		err = json.Unmarshal([]byte(t.text), &key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to handle quoted key `%s`", t.text)
+		}
+		out[key] = val
+		return out, nil
+
+	case typNumeric:
+		var out []interface{}
+		val, err := ungronTokens(ts[1:])
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, val)
+		return out, nil
+
+	default:
+		return nil, fmt.Errorf("failed to ungron tokens")
+	}
 }
