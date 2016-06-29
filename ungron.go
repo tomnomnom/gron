@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -269,16 +270,15 @@ func ungronTokens(ts []token) (interface{}, error) {
 		return val, nil
 
 	case typBare:
-		out := make(map[string]interface{})
 		val, err := ungronTokens(ts[1:])
 		if err != nil {
 			return nil, err
 		}
+		out := make(map[string]interface{})
 		out[t.text] = val
 		return out, nil
 
 	case typQuoted:
-		out := make(map[string]interface{})
 		val, err := ungronTokens(ts[1:])
 		if err != nil {
 			return nil, err
@@ -288,19 +288,104 @@ func ungronTokens(ts []token) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to handle quoted key `%s`", t.text)
 		}
+
+		out := make(map[string]interface{})
 		out[key] = val
 		return out, nil
 
 	case typNumeric:
-		var out []interface{}
+		key, err := strconv.Atoi(t.text)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert array key to int: %s", err)
+		}
+
 		val, err := ungronTokens(ts[1:])
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, val)
+
+		// There needs to be at least key + 1 space in the array
+		out := make([]interface{}, key+1)
+		out[key] = val
 		return out, nil
 
 	default:
 		return nil, fmt.Errorf("failed to ungron tokens")
 	}
+}
+
+// recursiveMerge merges maps and slices, or returns b for scalars
+func recursiveMerge(a, b interface{}) (interface{}, error) {
+	switch a.(type) {
+
+	case map[string]interface{}:
+		bMap, ok := b.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("cannot merge map[string]interface{} with non-map")
+		}
+		return recursiveMapMerge(a.(map[string]interface{}), bMap)
+
+	case []interface{}:
+		bSlice, ok := b.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("cannot merge []interface{} with non-slice")
+		}
+		return recursiveSliceMerge(a.([]interface{}), bSlice)
+
+	case string, int, float64, bool, nil:
+		// Can't merge them, second one wins
+		return b, nil
+
+	default:
+		return nil, fmt.Errorf("cannot merge datastructures that are not []interface{} or map[string]interface{}")
+	}
+}
+
+// recursiveMapMerge recursively merges map[string]interface{} values
+func recursiveMapMerge(a, b map[string]interface{}) (map[string]interface{}, error) {
+	// Merge keys from b into a
+	for k, v := range b {
+		_, exists := a[k]
+		if !exists {
+			// Doesn't exist in a, just add it in
+			a[k] = v
+		} else {
+			// Does exist, merge the values
+			merged, err := recursiveMerge(a[k], b[k])
+			if err != nil {
+				return nil, fmt.Errorf("error merging map values: %s", err)
+			}
+
+			a[k] = merged
+		}
+	}
+	return a, nil
+}
+
+// recursiveSliceMerge recursively merged []interface{} values
+func recursiveSliceMerge(a, b []interface{}) ([]interface{}, error) {
+	// We need a new slice with the capacity of whichever
+	// slive is biggest
+	outLen := len(a)
+	if len(b) > outLen {
+		outLen = len(b)
+	}
+	out := make([]interface{}, outLen)
+
+	// Copy the values from 'a' into the output slice
+	copy(out, a)
+
+	// Add the values from 'b'; merging existing keys
+	for k, v := range b {
+		if out[k] == nil {
+			out[k] = v
+		} else if v != nil {
+			merged, err := recursiveMerge(out[k], b[k])
+			if err != nil {
+				return nil, fmt.Errorf("error merging slice values: %s", err)
+			}
+			out[k] = merged
+		}
+	}
+	return out, nil
 }

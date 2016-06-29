@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,6 +18,7 @@ const (
 	exitJSONDecode
 	exitFormStatements
 	exitFetchURL
+	exitUnknown
 )
 
 func init() {
@@ -45,6 +47,7 @@ func init() {
 }
 
 func main() {
+	ungronFlag := flag.Bool("ungron", false, "Turn statements into JSON instead")
 	flag.Parse()
 
 	var raw io.Reader
@@ -68,7 +71,17 @@ func main() {
 		}
 	}
 
-	b, err := ioutil.ReadAll(raw)
+	if *ungronFlag {
+		ungron(raw)
+	} else {
+		gron(raw)
+	}
+
+}
+
+func gron(r io.Reader) {
+
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		fatal(exitReadInput, "failed to read input", err)
 	}
@@ -96,6 +109,57 @@ func main() {
 	}
 
 	os.Exit(exitOK)
+}
+
+func ungron(r io.Reader) {
+	scanner := bufio.NewScanner(r)
+
+	// Get all the idividually parsed statements
+	var parsed []interface{}
+	for scanner.Scan() {
+		l := newLexer(scanner.Text())
+		u, err := ungronTokens(l.lex())
+
+		if err != nil {
+			fatal(exitUnknown, "TODO: Add proper error for ungron tokens", err)
+		}
+
+		parsed = append(parsed, u)
+	}
+	// TODO: Handle any scanner errors
+
+	if len(parsed) == 0 {
+		fatal(exitUnknown, "TODO: Add proper error for no parsed statements", nil)
+	}
+
+	merged := parsed[0]
+	for _, p := range parsed[1:] {
+		m, err := recursiveMerge(merged, p)
+		if err != nil {
+			fatal(exitUnknown, "TODO: Add proper error for merging statements", err)
+		}
+		merged = m
+	}
+
+	// If there's only one top level key and it's "json", make that the top level thing
+	mergedMap, ok := merged.(map[string]interface{})
+	if ok {
+		if len(mergedMap) == 1 {
+			if _, exists := mergedMap["json"]; exists {
+				merged = mergedMap["json"]
+			}
+		}
+	}
+
+	j, err := json.MarshalIndent(merged, "", "  ")
+	if err != nil {
+		fatal(exitUnknown, "TODO: Add proper error for JSON marshal failure", err)
+	}
+
+	fmt.Printf("%s\n", j)
+
+	os.Exit(exitOK)
+
 }
 
 func fatal(code int, msg string, err error) {

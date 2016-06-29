@@ -100,6 +100,58 @@ func TestUngronTokens(t *testing.T) {
 
 	eq := reflect.DeepEqual(have, want)
 	if !eq {
-		t.Errorf("Have and want structs are unequal")
+		t.Errorf("Have and want datastructures are unequal")
 	}
+}
+
+func TestMerge(t *testing.T) {
+	a := map[string]interface{}{
+		"json": map[string]interface{}{
+			"contact": map[string]interface{}{
+				"e-mail": []interface{}{
+					0: "mail@tomnomnom.com",
+				},
+			},
+		},
+	}
+
+	b := map[string]interface{}{
+		"json": map[string]interface{}{
+			"contact": map[string]interface{}{
+				"e-mail": []interface{}{
+					1: "test@tomnomnom.com",
+					3: "foo@tomnomnom.com",
+				},
+				"twitter": "@TomNomNom",
+			},
+		},
+	}
+
+	want := map[string]interface{}{
+		"json": map[string]interface{}{
+			"contact": map[string]interface{}{
+				"e-mail": []interface{}{
+					0: "mail@tomnomnom.com",
+					1: "test@tomnomnom.com",
+					3: "foo@tomnomnom.com",
+				},
+				"twitter": "@TomNomNom",
+			},
+		},
+	}
+
+	t.Logf("A: %#v", a)
+	t.Logf("B: %#v", b)
+	have, err := recursiveMerge(a, b)
+	if err != nil {
+		t.Fatalf("failed to merge datastructures: %s", err)
+	}
+
+	t.Logf("Have: %#v", have)
+	t.Logf("Want: %#v", want)
+	eq := reflect.DeepEqual(have, want)
+	if !eq {
+		t.Errorf("Have and want datastructures are unequal")
+	}
+
 }
