@@ -6,6 +6,11 @@ Make JSON greppable!
 gron transforms JSON into discrete assignments to make it easier to `grep` for what you want and see the absolute 'path' to it.
 It eases the exploration of APIs that return large blobs of JSON but have terrible documentation.
 
+<pre>
+▶ echo '{"is":{"hard":{"to":{"grep":{"gron":{"makes":{"it":"easy"}}}}}}}' | gron | grep easy
+json.is.hard.to.grep.gron.makes.it = "<b>easy</b>";
+</pre>
+
 ## Installation
 
 gron has no runtime dependencies. You can just [download a binary for Linux or Mac and run it](https://github.com/tomnomnom/gron/releases).
