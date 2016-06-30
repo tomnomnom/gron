@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.0
+- Adds [ungronning](README.mkd#ungronning)!
+
 ## 0.1.7
 - Fixes sorting of array keys; now uses natural sort
 
