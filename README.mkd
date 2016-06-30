@@ -126,7 +126,8 @@ json.likes[2] = "meat";
 }
 ```
 
-You can see a [demo of ungronning in action here](https://asciinema.org/a/50565).
+If you get creative you can do [some pretty neat tricks with gron](ADVANCED.mkd), and
+then ungron the output back into JSON.
 
 ## Get Help
 
