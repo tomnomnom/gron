@@ -7,7 +7,7 @@ gron transforms JSON into discrete assignments to make it easier to `grep` for w
 It eases the exploration of APIs that return large blobs of JSON but have terrible documentation.
 
 <pre>
-▶ echo '{"is":{"hard":{"to":{"grep":{"gron":{"makes":{"it":"easy"}}}}}}}' | gron | grep easy
+▶ echo '{"is":{"hard":{"to":{"grep":{"gron":{"makes":{"it":"easy"}}}}}}}' | <b>gron</b> | grep easy
 json.is.hard.to.grep.gron.makes.it = "<b>easy</b>";
 </pre>
 
