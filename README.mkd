@@ -21,6 +21,12 @@ Or if you're a Go user you can use `go get`:
 ▶ go get -u github.com/tomnomnom/gron
 ```
 
+It's recommended that you alias `ungron` or `norg` (or both!) to `gron --ungron`. Put something like this in your shell profile (e.g. in `~/.bashrc`):
+```
+alias norg="gron --ungron"
+alias ungron="gron --ungron"
+```
+
 ## Usage
 
 Get JSON from a file:
