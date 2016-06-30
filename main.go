@@ -18,7 +18,8 @@ const (
 	exitJSONDecode
 	exitFormStatements
 	exitFetchURL
-	exitUnknown
+	exitParseStatements
+	exitJSONEncode
 )
 
 func init() {
@@ -26,28 +27,38 @@ func init() {
 		h := "Transform JSON (from a file, URL, or stdin) into discrete assignments to make it greppable\n\n"
 
 		h += "Usage:\n"
-		h += "  gron [file|url]\n\n"
+		h += "  gron [OPTIONS] [FILE|URL|-]\n\n"
+
+		h += "Options:\n"
+		h += "  -u, --ungron\tReverse the operation (turn assignments back into JSON)\n\n"
 
 		h += "Exit Codes:\n"
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
 		h += fmt.Sprintf("  %d\t%s\n", exitOpenFile, "Failed to open file")
 		h += fmt.Sprintf("  %d\t%s\n", exitReadInput, "Failed to read input")
 		h += fmt.Sprintf("  %d\t%s\n", exitJSONDecode, "Failed to decode JSON")
-		h += fmt.Sprintf("  %d\t%s\n", exitFormStatements, "Failed to from statements")
+		h += fmt.Sprintf("  %d\t%s\n", exitFormStatements, "Failed to form statements")
 		h += fmt.Sprintf("  %d\t%s\n", exitFetchURL, "Failed to fetch URL")
+		h += fmt.Sprintf("  %d\t%s\n", exitParseStatements, "Failed to parse statements")
+		h += fmt.Sprintf("  %d\t%s\n", exitJSONEncode, "Failed to encode JSON")
 		h += "\n"
 
 		h += "Examples:\n"
 		h += "  gron /tmp/apiresponse.json\n"
-		h += "  gron http://headers.jsontest.com/ \n"
-		h += "  curl -s http://headers.jsontest.com/ | gron\n"
+		h += "  gron http://jsonplaceholder.typicode.com/users/1 \n"
+		h += "  curl -s http://jsonplaceholder.typicode.com/users/1 | gron\n"
+		h += "  gron http://jsonplaceholder.typicode.com/users/1 | grep company | gron --ungron\n"
 
 		fmt.Fprintf(os.Stderr, h)
 	}
 }
 
+var ungronFlag bool
+
 func main() {
-	ungronFlag := flag.Bool("ungron", false, "Turn statements into JSON instead")
+	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
+	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
+
 	flag.Parse()
 
 	var raw io.Reader
@@ -73,7 +84,7 @@ func main() {
 
 	var exitCode int
 	var err error
-	if *ungronFlag {
+	if ungronFlag {
 		exitCode, err = ungron(raw, os.Stdout)
 	} else {
 		exitCode, err = gron(raw, os.Stdout)
@@ -121,31 +132,19 @@ func gron(r io.Reader, w io.Writer) (int, error) {
 func ungron(r io.Reader, w io.Writer) (int, error) {
 	scanner := bufio.NewScanner(r)
 
-	// Get all the idividually parsed statements
-	var parsed []interface{}
+	// Make a list of statements from the input
+	var ss statements
 	for scanner.Scan() {
-		l := newLexer(scanner.Text())
-		u, err := ungronTokens(l.lex())
-
-		if err != nil {
-			return exitUnknown, fmt.Errorf("failed to translate tokens into datastructure: %s", err)
-		}
-
-		parsed = append(parsed, u)
+		ss.AddFull(scanner.Text())
 	}
-	// TODO: Handle any scanner errors
-
-	if len(parsed) == 0 {
-		return exitUnknown, fmt.Errorf("no statements were parsed")
+	if err := scanner.Err(); err != nil {
+		return exitReadInput, fmt.Errorf("failed to read input statements")
 	}
 
-	merged := parsed[0]
-	for _, p := range parsed[1:] {
-		m, err := recursiveMerge(merged, p)
-		if err != nil {
-			return exitUnknown, fmt.Errorf("failed to merge statements: %s", err)
-		}
-		merged = m
+	// ungron the statements
+	merged, err := ss.ungron()
+	if err != nil {
+		return exitParseStatements, fmt.Errorf("failed to parse input statements")
 	}
 
 	// If there's only one top level key and it's "json", make that the top level thing
@@ -160,7 +159,7 @@ func ungron(r io.Reader, w io.Writer) (int, error) {
 
 	j, err := json.MarshalIndent(merged, "", "  ")
 	if err != nil {
-		return exitUnknown, fmt.Errorf("failed to convert statements to JSON: %s", err)
+		return exitJSONEncode, fmt.Errorf("failed to convert statements to JSON: %s", err)
 	}
 
 	fmt.Fprintf(w, "%s\n", j)

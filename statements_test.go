@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"reflect"
 	"sort"
 	"testing"
 )
@@ -289,5 +290,42 @@ func BenchmarkMakePrefixQuoted(b *testing.B) {
 func BenchmarkMakePrefixInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = makePrefix("json", 212)
+	}
+}
+
+func TestUngronStatements(t *testing.T) {
+	in := statements{
+		`json.contact = {};`,
+		`json.contact["e-mail"][0] = "mail@tomnomnom.com";`,
+		`json.contact["e-mail"][1] = "test@tomnomnom.com";`,
+		`json.contact["e-mail"][3] = "foo@tomnomnom.com";`,
+		`json.contact.twitter = "@TomNomNom";`,
+	}
+
+	want := map[string]interface{}{
+		"json": map[string]interface{}{
+			"contact": map[string]interface{}{
+				"e-mail": []interface{}{
+					0: "mail@tomnomnom.com",
+					1: "test@tomnomnom.com",
+					3: "foo@tomnomnom.com",
+				},
+				"twitter": "@TomNomNom",
+			},
+		},
+	}
+
+	have, err := in.ungron()
+
+	if err != nil {
+		t.Fatalf("want nil error but have: %s", err)
+	}
+
+	t.Logf("Have: %#v", have)
+	t.Logf("Want: %#v", want)
+
+	eq := reflect.DeepEqual(have, want)
+	if !eq {
+		t.Errorf("have and want are not equal")
 	}
 }

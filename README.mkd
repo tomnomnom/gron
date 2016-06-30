@@ -79,6 +79,53 @@ The output of `gron` is valid JavaScript:
   name: 'Tom' }
 ```
 
+## ungronning
+gron can also turn its output back into JSON:
+```
+▶ gron testdata/two.json | gron -u
+{
+  "contact": {
+    "email": "mail@tomnomnom.com",
+    "twitter": "@TomNomNom"
+  },
+  "github": "https://github.com/tomnomnom/",
+  "likes": [
+    "code",
+    "cheese",
+    "meat"
+  ],
+  "name": "Tom"
+}
+```
+
+This means use can use gron with `grep` and other tools to modify JSON:
+```
+▶ gron testdata/two.json | grep likes | gron --ungron
+{
+  "likes": [
+    "code",
+    "cheese",
+    "meat"
+  ]
+}
+```
+
+To preserve array keys, arrays are padded with `null` when values are missing:
+```
+▶ gron testdata/two.json | grep likes | grep -v cheese
+json.likes = [];
+json.likes[0] = "code";
+json.likes[2] = "meat";
+▶ gron testdata/two.json | grep likes | grep -v cheese | gron --ungron
+{
+  "likes": [
+    "code",
+    null,
+    "meat"
+  ]
+}
+```
+
 ## Get Help
 
 ```
@@ -86,20 +133,26 @@ The output of `gron` is valid JavaScript:
 Transform JSON (from a file, URL, or stdin) into discrete assignments to make it greppable
 
 Usage:
-  gron [file|url]
+  gron [OPTIONS] [FILE|URL|-]
+
+Options:
+  -u, --ungron	Reverse the operation (turn assignments back into JSON)
 
 Exit Codes:
   0	OK
   1	Failed to open file
   2	Failed to read input
   3	Failed to decode JSON
-  4	Failed to from statements
+  4	Failed to form statements
   5	Failed to fetch URL
+  6	Failed to parse statements
+  7	Failed to encode JSON
 
 Examples:
   gron /tmp/apiresponse.json
-  gron http://headers.jsontest.com/ 
-  curl -s http://headers.jsontest.com/ | gron
+  gron http://jsonplaceholder.typicode.com/users/1 
+  curl -s http://jsonplaceholder.typicode.com/users/1 | gron
+  gron http://jsonplaceholder.typicode.com/users/1 | grep company | gron --ungron
 ```
 
 ## FAQ

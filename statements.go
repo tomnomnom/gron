@@ -17,6 +17,11 @@ func (ss *statements) Add(prefix, value string) {
 	*ss = append(*ss, fmt.Sprintf("%s = %s;", prefix, value))
 }
 
+// AddFull adds a new statement to the list given the entire statement
+func (ss *statements) AddFull(s string) {
+	*ss = append(*ss, s)
+}
+
 // AddMulti adds a whole other list of statements
 func (ss *statements) AddMulti(l statements) {
 	*ss = append(*ss, l...)
@@ -30,6 +35,38 @@ func (ss statements) Len() int {
 // Swap swaps two statements for sort.Sort
 func (ss statements) Swap(i, j int) {
 	ss[i], ss[j] = ss[j], ss[i]
+}
+
+// ungron turns statements into a proper datastructur
+func (ss statements) ungron() (interface{}, error) {
+
+	// Get all the idividually parsed statements
+	var parsed []interface{}
+	for _, s := range ss {
+		l := newLexer(s)
+		u, err := ungronTokens(l.lex())
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to translate tokens into datastructure: %s", err)
+		}
+
+		parsed = append(parsed, u)
+	}
+
+	if len(parsed) == 0 {
+		return nil, fmt.Errorf("no statements were parsed")
+	}
+
+	merged := parsed[0]
+	for _, p := range parsed[1:] {
+		m, err := recursiveMerge(merged, p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to merge statements: %s", err)
+		}
+		merged = m
+	}
+	return merged, nil
+
 }
 
 // Less compares two statements for sort.Sort

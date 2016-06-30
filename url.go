@@ -18,7 +18,7 @@ func getURL(url string) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "gron/0.1")
+	req.Header.Set("User-Agent", "gron/0.2")
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
