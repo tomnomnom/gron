@@ -98,7 +98,7 @@ gron can also turn its output back into JSON:
 }
 ```
 
-This means use can use gron with `grep` and other tools to modify JSON:
+This means you use can use gron with `grep` and other tools to modify JSON:
 ```
 ▶ gron testdata/two.json | grep likes | gron --ungron
 {
@@ -125,6 +125,9 @@ json.likes[2] = "meat";
   ]
 }
 ```
+
+You can see a demo of ungronning in action here:
+[![asciicast](https://asciinema.org/a/50565.png)](https://asciinema.org/a/50565)
 
 ## Get Help
 
