@@ -247,6 +247,12 @@ func lexValue(l *lexer) lexFn {
 	}
 	l.accept(" ")
 	l.ignore()
+
+	// If the value is a string we need to read until the end
+	// of the string incase there's a semicolon in it
+	if l.accept("\"") {
+		l.acceptUntilUnescaped("\"")
+	}
 	l.acceptUntil(";")
 	l.emit(typValue)
 	return nil

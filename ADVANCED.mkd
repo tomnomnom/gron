@@ -1,0 +1,136 @@
+# Advanced Usage
+
+Although gron's primary purpose is API discovery, when combined with other tools like `grep` it can do some interesting things.
+
+As an exercise, let's try to mimick some of the examples from the [jq tutorial](https://stedolan.github.io/jq/tutorial/).
+
+> Disclaimer: munging data on the command line with gron can be useful, but using tools like `grep` and `sed` to manipulate the
+> data is error-prone and shouldn't be relied on in scripts.
+
+Get the last 5 commits from the gron repo:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5'
+json = [];
+json[0] = {};
+json[0].author = {};
+json[0].author.avatar_url = "https://avatars.githubusercontent.com/u/58276?v=3";
+json[0].author.events_url = "https://api.github.com/users/tomnomnom/events{/privacy}";
+...
+json[4].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/cbcad2299e55c28a9922776e58b2a0b5a0f05016";
+json[4].parents[0].sha = "cbcad2299e55c28a9922776e58b2a0b5a0f05016";
+json[4].parents[0].url = "https://api.github.com/repos/tomnomnom/gron/commits/cbcad2299e55c28a9922776e58b2a0b5a0f05016";
+json[4].sha = "91b204972e63a1166c9d148fbbfd839f8697f91b";
+json[4].url = "https://api.github.com/repos/tomnomnom/gron/commits/91b204972e63a1166c9d148fbbfd839f8697f91b";
+```
+
+Extract just the first commit using `fgrep 'json[0]'`:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | fgrep 'json[0]'
+json[0] = {};
+json[0].author = {};
+json[0].author.avatar_url = "https://avatars.githubusercontent.com/u/58276?v=3";
+json[0].author.events_url = "https://api.github.com/users/tomnomnom/events{/privacy}";
+json[0].author.followers_url = "https://api.github.com/users/tomnomnom/followers";
+...
+json[0].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
+json[0].parents[0].sha = "48aba5325ece087ae24ab72684851cbe77ce8311";
+json[0].parents[0].url = "https://api.github.com/repos/tomnomnom/gron/commits/48aba5325ece087ae24ab72684851cbe77ce8311";
+json[0].sha = "7da81e29c27241c0a5c2e5d083ddebcfcc525908";
+json[0].url = "https://api.github.com/repos/tomnomnom/gron/commits/7da81e29c27241c0a5c2e5d083ddebcfcc525908";
+```
+
+Get just the committer's name and the commit message using `egrep '(committer.name|commit.message)'`:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | fgrep 'json[0]' | egrep '(committer.name|commit.message)'
+json[0].commit.committer.name = "Tom Hudson";
+json[0].commit.message = "Adds 0.1.7 to changelog";
+```
+
+Turn the result back into JSON using `gron --ungron`:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | fgrep 'json[0]' | egrep '(committer.name|commit.message)' | gron --ungron
+[
+  {
+    "commit": {
+      "committer": {
+        "name": "Tom Hudson"
+      },
+      "message": "Adds 0.1.7 to changelog"
+    }
+  }
+]
+```
+
+gron preserves the location of values in the JSON, but you can use `sed` to remove keys from the path:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | fgrep 'json[0]' | egrep '(committer.name|commit.message)' | sed -r 's/(commit|committer)\.//g'
+json[0].name = "Tom Hudson";
+json[0].message = "Adds 0.1.7 to changelog"
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | fgrep 'json[0]' | egrep '(committer.name|commit.message)' | sed -r 's/(commit|committer)\.//g' | gron --ungron
+[
+  {
+    "message": "Adds 0.1.7 to changelog",
+    "name": "Tom Hudson"
+  }
+]
+```
+
+Removing the `fgrep 'json[0]'` from the pipeline means we do the same for all commits:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | egrep '(committer.name|commit.message)' | sed -r 's/(commit|committer)\.//g' | gron --ungron
+[
+  {
+    "message": "Adds 0.1.7 to changelog",
+    "name": "Tom Hudson"
+  },
+  {
+    "message": "Refactors natural sort to actualy work + be more readable",
+    "name": "Tom Hudson"
+  },
+...
+```
+
+To include the `html_url` key for each commit's parents, all we need to do is add `parents.*html_url` into our call to `egrep`:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | egrep '(committer.name|commit.message|parents.*html_url)' | sed -r 's/(commit|committer)\.//g' 
+json[0].name = "Tom Hudson";
+json[0].message = "Adds 0.1.7 to changelog";
+json[0].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
+json[1].name = "Tom Hudson";
+json[1].message = "Refactors natural sort to actualy work + be more readable";
+json[1].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f077cebf0d942c1fa8bc51e8f2";
+...
+```
+
+To make the structure more like that in the final example in the `jq` tutorial, we can use `sed -r 's/\.html_url//'` to remove the `.html_url` part of the path:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | egrep '(committer.name|commit.message|parents.*html_url)' | sed -r 's/(commit|committer)\.//g' | sed -r 's/\.html_url//'
+json[0].name = "Tom Hudson";
+json[0].message = "Adds 0.1.7 to changelog";
+json[0].parents[0] = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
+json[1].name = "Tom Hudson";
+json[1].message = "Refactors natural sort to actualy work + be more readable";
+json[1].parents[0] = "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f077cebf0d942c1fa8bc51e8f2";
+...
+```
+
+And, of course, the statements can be turned back into JSON with `gron --ungron`:
+```
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=5' | egrep '(committer.name|commit.message|parents.*html_url)' | sed -r 's/(commit|committer)\.//g' | sed -r 's/\.html_url//' | gron --ungron
+[
+  {
+    "message": "Adds 0.1.7 to changelog",
+    "name": "Tom Hudson",
+    "parents": [
+      "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311"
+    ]
+  },
+  {
+    "message": "Refactors natural sort to actualy work + be more readable",
+    "name": "Tom Hudson",
+    "parents": [
+      "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f077cebf0d942c1fa8bc51e8f2"
+    ]
+  },
+...
+```
