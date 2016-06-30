@@ -126,8 +126,7 @@ json.likes[2] = "meat";
 }
 ```
 
-You can see a demo of ungronning in action here:
-[![asciicast](https://asciinema.org/a/50565.png)](https://asciinema.org/a/50565)
+You can see a [demo of ungronning in action here](https://asciinema.org/a/50565).
 
 ## Get Help
 
