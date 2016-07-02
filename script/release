@@ -1,7 +1,7 @@
 #!/bin/bash
 PROJDIR=$(cd `dirname $0`/.. && pwd)
 
-TAG=${1}
+TAG="v${1}"
 USER="tomnomnom"
 REPO="gron"
 BINARY="${REPO}"
@@ -33,14 +33,20 @@ if [ $? -ne 0 ]; then
 fi
 
 
-for OS in "darwin" "linux"; do
+for OS in "darwin" "linux" "windows"; do
 
-    rm -f ${BINARY}
+    BINFILE="${BINARY}"
+
+    if [[ "${OS}" == "windows" ]]; then
+        BINFILE="${BINFILE}.exe"
+    fi
+
+    rm -f ${BINFILE}
 
     GOOS=${OS} GOARCH=amd64 go build github.com/${USER}/${REPO}
 
     ARCHIVE="${BINARY}-${OS}-amd64-${TAG}.tgz"
-    tar --create --gzip --file=${ARCHIVE} ${BINARY}
+    tar --create --gzip --file=${ARCHIVE} ${BINFILE}
 
     github-release upload \
         --user ${USER} \
