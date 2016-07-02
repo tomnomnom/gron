@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 PROJDIR=$(cd `dirname $0`/.. && pwd)
 
 VERSION="${1}"
@@ -22,6 +21,10 @@ cd ${PROJDIR}
 
 # Run the tests
 go test
+if [ $? -ne 0 ]; then
+    echo "Tests failed. Aborting."    
+    exit 3
+fi
 
 # Check if tag exists
 git fetch --tags
