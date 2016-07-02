@@ -15,7 +15,7 @@ json.is.hard.to.grep.gron.makes.it = "<b>easy</b>";
 {
   "it": {
     "works": {
-      "<b>backwards</b>": "too!"
+      "backwards": "too!"
     }
   }
 }
