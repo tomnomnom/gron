@@ -9,7 +9,8 @@ It eases the exploration of APIs that return large blobs of JSON but have terrib
 <pre>
 ▶ echo '{"is":{"hard":{"to":{"grep":{"gron":{"makes":{"it":"easy"}}}}}}}' | <b>gron</b> | grep easy
 json.is.hard.to.grep.gron.makes.it = "<b>easy</b>";
-
+</pre>
+<pre>
 ▶ echo 'it.works.backwards = "too!";' | <b>gron --ungron</b>
 {
   "it": {
