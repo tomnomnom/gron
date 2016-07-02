@@ -7,19 +7,30 @@ gron transforms JSON into discrete assignments to make it easier to `grep` for w
 It eases the exploration of APIs that return large blobs of JSON but have terrible documentation.
 
 <pre>
-▶ echo '{"is":{"hard":{"to":{"grep":{"gron":{"makes":{"it":"easy"}}}}}}}' | <b>gron</b> | grep easy
-json.is.hard.to.grep.gron.makes.it = "<b>easy</b>";
+▶ <b>gron</b> 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=1' | fgrep 'commit.author'
+json[0].commit.author = {};
+json[0].commit.author.date = "2016-07-02T10:51:21Z";
+json[0].commit.author.email = "mail@tomnomnom.com";
+json[0].commit.author.name = "Tom Hudson";
 </pre>
+
+gron can work backwards too, enabling you to turn your filtered data back into JSON:
 <pre>
-▶ echo 'it.works.backwards = "too!";' | <b>gron --ungron</b>
-{
-  "it": {
-    "works": {
-      "backwards": "too!"
+▶ gron 'https://api.github.com/repos/tomnomnom/gron/commits?per_page=1' | fgrep 'commit.author' | <b>gron --ungron</b>
+[
+  {
+    "commit": {
+      "author": {
+        "date": "2016-07-02T10:51:21Z",
+        "email": "mail@tomnomnom.com",
+        "name": "Tom Hudson"
+      }
     }
   }
-}
+]
 </pre>
+
+> Disclaimer: the GitHub API documentation is fantastic, but it makes for a good example.
 
 ## Installation
 
