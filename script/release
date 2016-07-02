@@ -22,7 +22,7 @@ cd ${PROJDIR}
 # Run the tests
 go test
 if [ $? -ne 0 ]; then
-    echo "Tests failed. Aborting."    
+    echo "Tests failed. Aborting."
     exit 3
 fi
 
@@ -56,6 +56,7 @@ for OS in "darwin" "linux" "windows"; do
     ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.tgz"
     tar --create --gzip --file=${ARCHIVE} ${BINFILE}
 
+    echo "Uploading ${ARCHIVE}..."
     github-release upload \
         --user ${USER} \
         --repo ${REPO} \
