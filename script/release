@@ -1,13 +1,15 @@
 #!/bin/bash
+set -e
 PROJDIR=$(cd `dirname $0`/.. && pwd)
 
-TAG="v${1}"
+VERSION="${1}"
+TAG="v${VERSION}"
 USER="tomnomnom"
 REPO="gron"
 BINARY="${REPO}"
 
-if [[ -z "${TAG}" ]]; then
-    echo "Usage: ${0} <tag>"
+if [[ -z "${VERSION}" ]]; then
+    echo "Usage: ${0} <version>"
     exit 1
 fi
 
@@ -18,6 +20,9 @@ fi
 
 cd ${PROJDIR}
 
+# Run the tests
+go test
+
 # Check if tag exists
 git fetch --tags
 git tag | grep "^${TAG}$"
@@ -27,8 +32,8 @@ if [ $? -ne 0 ]; then
         --user ${USER} \
         --repo ${REPO} \
         --tag ${TAG} \
-        --name "${REPO} v${TAG}" \
-        --description "v${TAG}" \
+        --name "${REPO} ${TAG}" \
+        --description "${TAG}" \
         --pre-release
 fi
 
@@ -45,7 +50,7 @@ for OS in "darwin" "linux" "windows"; do
 
     GOOS=${OS} GOARCH=amd64 go build github.com/${USER}/${REPO}
 
-    ARCHIVE="${BINARY}-${OS}-amd64-${TAG}.tgz"
+    ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.tgz"
     tar --create --gzip --file=${ARCHIVE} ${BINFILE}
 
     github-release upload \

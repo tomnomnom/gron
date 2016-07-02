@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+- Adds windows binary
+
 ## 0.2.0
 - Adds [ungronning](README.mkd#ungronning)!
 
