@@ -53,8 +53,13 @@ for OS in "darwin" "linux" "windows"; do
 
     GOOS=${OS} GOARCH=amd64 go build github.com/${USER}/${REPO}
 
-    ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.tgz"
-    tar --create --gzip --file=${ARCHIVE} ${BINFILE}
+    if [[ "${OS}" == "windows" ]]; then
+        ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.zip"
+        zip ${ARCHIVE} ${BINFILE}
+    else
+        ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.tgz"
+        tar --create --gzip --file=${ARCHIVE} ${BINFILE}
+    fi
 
     echo "Uploading ${ARCHIVE}..."
     github-release upload \
