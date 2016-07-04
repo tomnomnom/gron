@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"unicode"
 	"unicode/utf8"
@@ -154,6 +155,19 @@ func (ss statements) Contains(search string) bool {
 	return false
 }
 
+// makeStatementsFromJSON takes an io.Reader containing JSON
+// and returns statements or an error on failure
+func makeStatementsFromJSON(r io.Reader) (statements, error) {
+	var top interface{}
+	d := json.NewDecoder(r)
+	d.UseNumber()
+	err := d.Decode(&top)
+	if err != nil {
+		return nil, err
+	}
+	return makeStatements("json", top)
+}
+
 // makeStatements takes a prefix and interface value and returns
 // a statements list or an error on failure
 func makeStatements(prefix string, v interface{}) (statements, error) {
@@ -193,7 +207,12 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 			ss.AddMulti(extra)
 		}
 
+	case json.Number:
+		ss.Add(prefix, vv.String())
+
 	case float64:
+		// This case *should* be handled by json.Number
+		// but is left just in case
 		ss.Add(prefix, formatValue(vv))
 
 	case string:

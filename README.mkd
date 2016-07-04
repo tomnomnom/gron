@@ -177,11 +177,10 @@ Exit Codes:
   0	OK
   1	Failed to open file
   2	Failed to read input
-  3	Failed to decode JSON
-  4	Failed to form statements
-  5	Failed to fetch URL
-  6	Failed to parse statements
-  7	Failed to encode JSON
+  3	Failed to form statements
+  4	Failed to fetch URL
+  5	Failed to parse statements
+  6	Failed to encode JSON
 
 Examples:
   gron /tmp/apiresponse.json

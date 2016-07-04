@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"sort"
@@ -19,16 +20,11 @@ func TestStatementsSimple(t *testing.T) {
 		"anob": {
 			"foo": "bar"
 		},
-		"else": 1
+		"else": 1,
+		"id": 66912849
 	}`)
 
-	var top interface{}
-	err := json.Unmarshal(j, &top)
-	if err != nil {
-		t.Errorf("Failed to unmarshal test file: %s", err)
-	}
-
-	ss, err := makeStatements("json", top)
+	ss, err := makeStatementsFromJSON(bytes.NewReader(j))
 
 	if err != nil {
 		t.Errorf("Want nil error from makeStatements() but got %s", err)
@@ -47,8 +43,10 @@ func TestStatementsSimple(t *testing.T) {
 		`json.anob = {};`,
 		`json.anob.foo = "bar";`,
 		`json["else"] = 1;`,
+		`json.id = 66912849;`,
 	}
 
+	t.Logf("Have: %#v", ss)
 	for _, want := range wants {
 		if !ss.Contains(want) {
 			t.Errorf("Statement group should contain `%s` but doesn't", want)

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4
+- Fixes handling of large integers (issue #6)
+
+## 0.2.3
+- Switches Windows binary packaging to zip instead of tgz
+
+## 0.2.2
+- Tweaks release automation, no user-facing changes
+
 ## 0.2.1
 - Adds windows binary
 

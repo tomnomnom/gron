@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"sort"
 )
@@ -15,7 +14,6 @@ const (
 	exitOK = iota
 	exitOpenFile
 	exitReadInput
-	exitJSONDecode
 	exitFormStatements
 	exitFetchURL
 	exitParseStatements
@@ -36,7 +34,6 @@ func init() {
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
 		h += fmt.Sprintf("  %d\t%s\n", exitOpenFile, "Failed to open file")
 		h += fmt.Sprintf("  %d\t%s\n", exitReadInput, "Failed to read input")
-		h += fmt.Sprintf("  %d\t%s\n", exitJSONDecode, "Failed to decode JSON")
 		h += fmt.Sprintf("  %d\t%s\n", exitFormStatements, "Failed to form statements")
 		h += fmt.Sprintf("  %d\t%s\n", exitFetchURL, "Failed to fetch URL")
 		h += fmt.Sprintf("  %d\t%s\n", exitParseStatements, "Failed to parse statements")
@@ -99,21 +96,7 @@ func main() {
 
 func gron(r io.Reader, w io.Writer) (int, error) {
 
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return exitReadInput, fmt.Errorf("failed to read input: %s", err)
-	}
-
-	// The 'JSON' might be an object, array or scalar, so the
-	// best we can do for now is an empty interface type
-	var top interface{}
-
-	err = json.Unmarshal(b, &top)
-	if err != nil {
-		return exitJSONDecode, fmt.Errorf("failed to decode JSON: %s", err)
-	}
-
-	ss, err := makeStatements("json", top)
+	ss, err := makeStatementsFromJSON(r)
 	if err != nil {
 		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
 	}
