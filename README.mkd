@@ -30,7 +30,7 @@ gron can work backwards too, enabling you to turn your filtered data back into J
 ]
 </pre>
 
-> Disclaimer: the GitHub API documentation is fantastic, but it makes for a good example.
+> Disclaimer: the GitHub API has fantastic documentation, but it makes for a good example.
 
 ## Installation
 
