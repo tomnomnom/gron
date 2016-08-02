@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.5
+- Fixes bad handling of escape sequences when ungronning (issue #7)
+
 ## 0.2.4
 - Fixes handling of large integers (issue #6)
 
