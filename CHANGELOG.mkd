@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.6
+## 0.2.7
 - Fixes bad handling of escape sequences when ungronning - but properly this time (issue #7)
 
 ## 0.2.5
