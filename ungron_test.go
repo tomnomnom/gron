@@ -28,6 +28,18 @@ func TestLex(t *testing.T) {
 			{`"ba;r"`, typValue},
 		}},
 
+		{`json.foo = "ba\r ;";`, []token{
+			{`json`, typBare},
+			{`foo`, typBare},
+			{`"ba\r ;"`, typValue},
+		}},
+
+		{`json.value = "\u003c ;"`, []token{
+			{`json`, typBare},
+			{`value`, typBare},
+			{`"\u003c ;"`, typValue},
+		}},
+
 		{`json[0] = "bar";`, []token{
 			{`json`, typBare},
 			{`0`, typNumeric},

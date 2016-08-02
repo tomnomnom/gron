@@ -21,6 +21,7 @@ type lexer struct {
 }
 
 // A tokenTyp identifies what kind of token something is
+//go:generate stringer -type=tokenTyp
 type tokenTyp int
 
 // Token types
@@ -144,7 +145,11 @@ func (l *lexer) acceptUntil(delims string) {
 // rune contained in the provided string, unless that rune was
 // escaped with a backslash
 func (l *lexer) acceptUntilUnescaped(delims string) {
-	for !strings.ContainsRune(delims, l.next()) && l.prev != '\\' {
+	for !strings.ContainsRune(delims, l.next()) {
+		// Hit the ending rune but it was escaped
+		if l.prev == '\\' {
+			continue
+		}
 		if l.cur == utf8.RuneError {
 			return
 		}
