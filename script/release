@@ -41,7 +41,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-for OS in "darwin" "linux" "windows"; do
+for OS in "darwin" "linux" "windows" "freebsd"; do
 
     BINFILE="${BINARY}"
 
