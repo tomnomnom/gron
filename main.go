@@ -31,7 +31,7 @@ func init() {
 
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
-		h += "  -M, --monochrome Monochrome (don't colorize JSON)\n\n"
+		h += "  -m, --monochrome Monochrome (don't colorize JSON)\n\n"
 
 		h += "Exit Codes:\n"
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
@@ -62,7 +62,7 @@ func main() {
 	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
 	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
 	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize JSON)")
-	flag.BoolVar(&monochromeFlag, "M", false, "Monochrome (don't colorize JSON)")
+	flag.BoolVar(&monochromeFlag, "m", false, "Monochrome (don't colorize JSON)")
 
 	flag.Parse()
 

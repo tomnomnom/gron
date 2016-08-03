@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.9
+- Adds colorized ungron output (thanks @nwidger!)
+- Adds 32 bit binaries to releases
+
 ## 0.2.8
 - Adds freebsd release binaries
 

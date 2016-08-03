@@ -41,31 +41,33 @@ if [ $? -ne 0 ]; then
 fi
 
 
-for OS in "darwin" "linux" "windows" "freebsd"; do
+for ARCH in "amd64" "386"; do
+    for OS in "darwin" "linux" "windows" "freebsd"; do
 
-    BINFILE="${BINARY}"
+        BINFILE="${BINARY}"
 
-    if [[ "${OS}" == "windows" ]]; then
-        BINFILE="${BINFILE}.exe"
-    fi
+        if [[ "${OS}" == "windows" ]]; then
+            BINFILE="${BINFILE}.exe"
+        fi
 
-    rm -f ${BINFILE}
+        rm -f ${BINFILE}
 
-    GOOS=${OS} GOARCH=amd64 go build github.com/${USER}/${REPO}
+        GOOS=${OS} GOARCH=${ARCH} go build github.com/${USER}/${REPO}
 
-    if [[ "${OS}" == "windows" ]]; then
-        ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.zip"
-        zip ${ARCHIVE} ${BINFILE}
-    else
-        ARCHIVE="${BINARY}-${OS}-amd64-${VERSION}.tgz"
-        tar --create --gzip --file=${ARCHIVE} ${BINFILE}
-    fi
+        if [[ "${OS}" == "windows" ]]; then
+            ARCHIVE="${BINARY}-${OS}-${ARCH}-${VERSION}.zip"
+            zip ${ARCHIVE} ${BINFILE}
+        else
+            ARCHIVE="${BINARY}-${OS}-${ARCH}-${VERSION}.tgz"
+            tar --create --gzip --file=${ARCHIVE} ${BINFILE}
+        fi
 
-    echo "Uploading ${ARCHIVE}..."
-    github-release upload \
-        --user ${USER} \
-        --repo ${REPO} \
-        --tag ${TAG} \
-        --name "${ARCHIVE}" \
-        --file ${PROJDIR}/${ARCHIVE}
+        echo "Uploading ${ARCHIVE}..."
+        github-release upload \
+            --user ${USER} \
+            --repo ${REPO} \
+            --tag ${TAG} \
+            --name "${ARCHIVE}" \
+            --file ${PROJDIR}/${ARCHIVE}
+    done
 done
