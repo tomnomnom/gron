@@ -171,16 +171,17 @@ Usage:
   gron [OPTIONS] [FILE|URL|-]
 
 Options:
-  -u, --ungron	Reverse the operation (turn assignments back into JSON)
+  -u, --ungron     Reverse the operation (turn assignments back into JSON)
+  -m, --monochrome Monochrome (don't colorize JSON)
 
 Exit Codes:
-  0	OK
-  1	Failed to open file
-  2	Failed to read input
-  3	Failed to form statements
-  4	Failed to fetch URL
-  5	Failed to parse statements
-  6	Failed to encode JSON
+  0 OK
+  1 Failed to open file
+  2 Failed to read input
+  3 Failed to form statements
+  4 Failed to fetch URL
+  5 Failed to parse statements
+  6 Failed to encode JSON
 
 Examples:
   gron /tmp/apiresponse.json
