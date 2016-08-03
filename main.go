@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"sort"
+
+	"github.com/nwidger/jsoncolor"
 )
 
 const (
@@ -28,7 +30,8 @@ func init() {
 		h += "  gron [OPTIONS] [FILE|URL|-]\n\n"
 
 		h += "Options:\n"
-		h += "  -u, --ungron\tReverse the operation (turn assignments back into JSON)\n\n"
+		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
+		h += "  -M, --monochrome Monochrome (don't colorize JSON)\n\n"
 
 		h += "Exit Codes:\n"
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
@@ -50,11 +53,16 @@ func init() {
 	}
 }
 
-var ungronFlag bool
+var (
+	ungronFlag     bool
+	monochromeFlag bool
+)
 
 func main() {
 	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
 	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
+	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize JSON)")
+	flag.BoolVar(&monochromeFlag, "M", false, "Monochrome (don't colorize JSON)")
 
 	flag.Parse()
 
@@ -140,7 +148,11 @@ func ungron(r io.Reader, w io.Writer) (int, error) {
 		}
 	}
 
-	j, err := json.MarshalIndent(merged, "", "  ")
+	marshalIndent := jsoncolor.MarshalIndent
+	if monochromeFlag {
+		marshalIndent = json.MarshalIndent
+	}
+	j, err := marshalIndent(merged, "", "  ")
 	if err != nil {
 		return exitJSONEncode, fmt.Errorf("failed to convert statements to JSON: %s", err)
 	}
