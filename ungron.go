@@ -11,24 +11,29 @@ import (
 
 // A lexer holds the state for lexing statements
 type lexer struct {
-	text       string
-	pos        int
-	width      int
-	cur        rune
-	prev       rune
-	tokens     []token
-	tokenStart int
+	text       string  // The raw input text
+	pos        int     // The current byte offset in the text
+	width      int     // The width of the current rune in bytes
+	cur        rune    // The rune at the current position
+	prev       rune    // The rune at the previous position
+	tokens     []token // The tokens that have been emitted
+	tokenStart int     // The starting position of the current token
 }
 
 // A tokenTyp identifies what kind of token something is
-//go:generate stringer -type=tokenTyp
 type tokenTyp int
 
-// Token types
 const (
+	// A bare word is a unquoted key; like 'foo' in json.foo = 1;
 	typBare tokenTyp = iota
+
+	// Numeric key; like '2' in json[2] = "foo";
 	typNumeric
+
+	// A quoted key; like 'foo bar' in json["foo bar"] = 2;
 	typQuoted
+
+	// Any value; like 'true' in json = true; or 'foo' in json = "foo";
 	typValue
 )
 
@@ -36,6 +41,25 @@ const (
 type token struct {
 	text string
 	typ  tokenTyp
+}
+
+// newLexer returns a new lexer for the provided input string
+func newLexer(text string) *lexer {
+	return &lexer{
+		text:       text,
+		pos:        0,
+		tokenStart: 0,
+		tokens:     make([]token, 0),
+	}
+}
+
+// lex runs the lexer and returns the lexed tokens
+func (l *lexer) lex() []token {
+
+	for lexfn := lexStatement; lexfn != nil; {
+		lexfn = lexfn(l)
+	}
+	return l.tokens
 }
 
 // next gets the next rune in the input and updates the lexer state
@@ -80,15 +104,6 @@ func (l *lexer) emit(typ tokenTyp) {
 	l.tokenStart = l.pos
 
 	l.tokens = append(l.tokens, t)
-}
-
-// lex runs the lexer and returns the lexed tokens
-func (l *lexer) lex() []token {
-
-	for next := lexStatement; next != nil; {
-		next = next(l)
-	}
-	return l.tokens
 }
 
 // accept moves the pointer if the next rune is in
@@ -154,16 +169,6 @@ func (l *lexer) acceptUntilUnescaped(delims string) {
 		if l.cur == utf8.RuneError {
 			return
 		}
-	}
-}
-
-// newLexer returns a new lexer for the provided string
-func newLexer(text string) *lexer {
-	return &lexer{
-		text:       text,
-		pos:        0,
-		tokenStart: 0,
-		tokens:     make([]token, 0),
 	}
 }
 
