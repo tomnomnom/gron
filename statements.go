@@ -10,17 +10,17 @@ import (
 )
 
 // formatter is an interchangeable statement formatter. It's
-// interchangeable so that it can be swapped out with one that
-// uses colors
+// interchangeable so that it can be swapped out with one
+// that, for example, uses colors
 var formatter monoFormatter
 
 // statements is a list of assignment statements.
 // E.g statement: json.foo = "bar";
 type statements []string
 
-// Add adds a new statement to the list given the prefix and value
-func (ss *statements) Add(prefix, value string) {
-	*ss = append(*ss, formatter.assignment(prefix, value))
+// Add adds a new statement to the list given the key and a value
+func (ss *statements) Add(key string, value interface{}) {
+	*ss = append(*ss, formatter.assignment(key, value))
 }
 
 // AddFull adds a new statement to the list given the entire statement
@@ -178,12 +178,14 @@ func makeStatementsFromJSON(r io.Reader) (statements, error) {
 func makeStatements(prefix string, v interface{}) (statements, error) {
 	ss := make(statements, 0)
 
+	// Add a statement for the current prefix and value
+	ss.Add(prefix, v)
+
+	// Recurse into objects and arrays
 	switch vv := v.(type) {
 
 	case map[string]interface{}:
 		// It's an object
-		ss.Add(prefix, "{}")
-
 		for k, sub := range vv {
 			newPrefix, err := formatter.prefix(prefix, k)
 			if err != nil {
@@ -198,8 +200,6 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 
 	case []interface{}:
 		// It's an array
-		ss.Add(prefix, "[]")
-
 		for k, sub := range vv {
 			newPrefix, err := formatter.prefix(prefix, k)
 			if err != nil {
@@ -211,23 +211,6 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 			}
 			ss.AddMulti(extra)
 		}
-
-	case json.Number:
-		ss.Add(prefix, vv.String())
-
-	case float64:
-		// This case *should* be handled by json.Number
-		// but is left just in case
-		ss.Add(prefix, formatter.value(vv))
-
-	case string:
-		ss.Add(prefix, formatter.value(vv))
-
-	case bool:
-		ss.Add(prefix, fmt.Sprintf("%t", vv))
-
-	case nil:
-		ss.Add(prefix, "null")
 	}
 
 	return ss, nil
@@ -237,7 +220,7 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 type statementFormatter interface {
 	prefix(string, interface{}) (string, error)
 	value(interface{}) string
-	assignment(string, string) string
+	assignment(string, interface{}) string
 }
 
 // monoFormatter formats statements in monochrome
@@ -247,7 +230,7 @@ type monoFormatter struct{}
 // E.g:
 //     a string -> "a string"
 //     7.0000   -> 7
-func (m monoFormatter) value(s interface{}) string {
+func (f monoFormatter) value(s interface{}) string {
 	out, err := json.Marshal(s)
 	if err != nil {
 		// It shouldn't be possible to be given a value we can't marshal
@@ -256,25 +239,44 @@ func (m monoFormatter) value(s interface{}) string {
 	return string(out)
 }
 
-// prefix takes the previous prefix and the next key and
+// prefix takes the previous prefix and the next identifier and
 // returns a new prefix or an error on failure
-func (m monoFormatter) prefix(prev string, next interface{}) (string, error) {
+func (f monoFormatter) prefix(prev string, next interface{}) (string, error) {
 	switch v := next.(type) {
 	case int:
+		// Next identifier is an array key
 		return fmt.Sprintf("%s[%d]", prev, v), nil
 	case string:
+		// Next identifier is an object key, either bare or quoted
 		if validIdentifier(v) {
 			// This is a fairly hot code path, and concatination has
 			// proven to be faster than fmt.Sprintf, despite the allocations
 			return prev + "." + v, nil
 		}
-		return prev + "[" + formatter.value(v) + "]", nil
+		return prev + "[" + f.value(v) + "]", nil
 	default:
 		return "", fmt.Errorf("could not form prefix for %#v", next)
 	}
 }
 
 // assignment formats an assignment
-func (m monoFormatter) assignment(key, value string) string {
-	return fmt.Sprintf("%s = %s;", key, value)
+func (f monoFormatter) assignment(key string, value interface{}) string {
+	var valStr string
+
+	switch vv := value.(type) {
+
+	case map[string]interface{}:
+		valStr = "{}"
+	case []interface{}:
+		valStr = "[]"
+	case json.Number:
+		valStr = vv.String()
+	case float64, string:
+		valStr = f.value(vv)
+	case bool:
+		valStr = fmt.Sprintf("%t", vv)
+	case nil:
+		valStr = "null"
+	}
+	return fmt.Sprintf("%s = %s;", key, valStr)
 }
