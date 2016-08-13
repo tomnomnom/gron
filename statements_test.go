@@ -55,29 +55,6 @@ func TestStatementsSimple(t *testing.T) {
 
 }
 
-func TestPrefixHappy(t *testing.T) {
-	tests := []struct {
-		prev string
-		next interface{}
-		want string
-	}{
-		{"j", 123, "j[123]"},
-		{"j", 1, "j[1]"},
-		{"j", "dotted", "j.dotted"},
-		{"j", "un-dotted", "j[\"un-dotted\"]"},
-	}
-
-	for _, test := range tests {
-		r, err := formatter.prefix(test.prev, test.next)
-		if err != nil {
-			t.Errorf("Want nil error from formatter.prefix(%s, %#v); have: %s", test.prev, test.next, err)
-		}
-		if r != test.want {
-			t.Errorf("Want %s from formatter.prefix(%s, %#v); have: %s", test.want, test.prev, test.next, r)
-		}
-	}
-}
-
 func TestStatementsSorting(t *testing.T) {
 	want := statements{
 		`json.a = true;`,
@@ -270,24 +247,6 @@ func BenchmarkMakeStatements(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_, _ = makeStatements("json", top)
-	}
-}
-
-func BenchmarkMakePrefixUnquoted(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_, _ = formatter.prefix("json", "isunquoted")
-	}
-}
-
-func BenchmarkMakePrefixQuoted(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_, _ = formatter.prefix("json", "this-is-quoted")
-	}
-}
-
-func BenchmarkMakePrefixInt(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_, _ = formatter.prefix("json", 212)
 	}
 }
 
