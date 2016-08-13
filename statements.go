@@ -9,13 +9,18 @@ import (
 	"unicode/utf8"
 )
 
+// formatter is an interchangeable statement formatter. It's
+// interchangeable so that it can be swapped out with one that
+// uses colors
+var formatter monoFormatter
+
 // statements is a list of assignment statements.
 // E.g statement: json.foo = "bar";
 type statements []string
 
 // Add adds a new statement to the list given the prefix and value
 func (ss *statements) Add(prefix, value string) {
-	*ss = append(*ss, fmt.Sprintf("%s = %s;", prefix, value))
+	*ss = append(*ss, formatter.assignment(prefix, value))
 }
 
 // AddFull adds a new statement to the list given the entire statement
@@ -180,7 +185,7 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 		ss.Add(prefix, "{}")
 
 		for k, sub := range vv {
-			newPrefix, err := makePrefix(prefix, k)
+			newPrefix, err := formatter.prefix(prefix, k)
 			if err != nil {
 				return ss, err
 			}
@@ -196,7 +201,7 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 		ss.Add(prefix, "[]")
 
 		for k, sub := range vv {
-			newPrefix, err := makePrefix(prefix, k)
+			newPrefix, err := formatter.prefix(prefix, k)
 			if err != nil {
 				return ss, err
 			}
@@ -213,10 +218,10 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 	case float64:
 		// This case *should* be handled by json.Number
 		// but is left just in case
-		ss.Add(prefix, formatValue(vv))
+		ss.Add(prefix, formatter.value(vv))
 
 	case string:
-		ss.Add(prefix, formatValue(vv))
+		ss.Add(prefix, formatter.value(vv))
 
 	case bool:
 		ss.Add(prefix, fmt.Sprintf("%t", vv))
@@ -228,20 +233,32 @@ func makeStatements(prefix string, v interface{}) (statements, error) {
 	return ss, nil
 }
 
-// formatValue uses json.Marshal to format scalars
+// statementFormatters handle the formatting of the output text
+type statementFormatter interface {
+	prefix(string, interface{}) (string, error)
+	value(interface{}) string
+	assignment(string, string) string
+}
+
+// monoFormatter formats statements in monochrome
+type monoFormatter struct{}
+
+// value uses json.Marshal to format scalars
 // E.g:
 //     a string -> "a string"
 //     7.0000   -> 7
-func formatValue(s interface{}) string {
-	// I'm pretty sure it's safe to ignore this error
-	// ...maybe. I'll work something into this I promise
-	out, _ := json.Marshal(s)
+func (m monoFormatter) value(s interface{}) string {
+	out, err := json.Marshal(s)
+	if err != nil {
+		// It shouldn't be possible to be given a value we can't marshal
+		panic(fmt.Sprintf("failed to marshal value: %#v", s))
+	}
 	return string(out)
 }
 
-// makePrefix takes the previous prefix and the next key and
+// prefix takes the previous prefix and the next key and
 // returns a new prefix or an error on failure
-func makePrefix(prev string, next interface{}) (string, error) {
+func (m monoFormatter) prefix(prev string, next interface{}) (string, error) {
 	switch v := next.(type) {
 	case int:
 		return fmt.Sprintf("%s[%d]", prev, v), nil
@@ -251,8 +268,13 @@ func makePrefix(prev string, next interface{}) (string, error) {
 			// proven to be faster than fmt.Sprintf, despite the allocations
 			return prev + "." + v, nil
 		}
-		return prev + "[" + formatValue(v) + "]", nil
+		return prev + "[" + formatter.value(v) + "]", nil
 	default:
 		return "", fmt.Errorf("could not form prefix for %#v", next)
 	}
+}
+
+// assignment formats an assignment
+func (m monoFormatter) assignment(key, value string) string {
+	return fmt.Sprintf("%s = %s;", key, value)
 }

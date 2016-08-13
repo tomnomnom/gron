@@ -68,12 +68,12 @@ func TestPrefixHappy(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		r, err := makePrefix(test.prev, test.next)
+		r, err := formatter.prefix(test.prev, test.next)
 		if err != nil {
-			t.Errorf("Want nil error from makePrefix(%s, %#v); have: %s", test.prev, test.next, err)
+			t.Errorf("Want nil error from formatter.prefix(%s, %#v); have: %s", test.prev, test.next, err)
 		}
 		if r != test.want {
-			t.Errorf("Want %s from makePrefix(%s, %#v); have: %s", test.want, test.prev, test.next, r)
+			t.Errorf("Want %s from formatter.prefix(%s, %#v); have: %s", test.want, test.prev, test.next, r)
 		}
 	}
 }
@@ -275,19 +275,19 @@ func BenchmarkMakeStatements(b *testing.B) {
 
 func BenchmarkMakePrefixUnquoted(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = makePrefix("json", "isunquoted")
+		_, _ = formatter.prefix("json", "isunquoted")
 	}
 }
 
 func BenchmarkMakePrefixQuoted(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = makePrefix("json", "this-is-quoted")
+		_, _ = formatter.prefix("json", "this-is-quoted")
 	}
 }
 
 func BenchmarkMakePrefixInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = makePrefix("json", 212)
+		_, _ = formatter.prefix("json", 212)
 	}
 }
 
