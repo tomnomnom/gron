@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/fatih/color"
 	"github.com/nwidger/jsoncolor"
 )
 
@@ -22,6 +23,14 @@ const (
 	exitJSONEncode
 )
 
+var (
+	strColor   = color.New(color.FgYellow)
+	braceColor = color.New(color.FgMagenta)
+	bareColor  = color.New(color.FgBlue, color.Bold)
+	numColor   = color.New(color.FgRed)
+	boolColor  = color.New(color.FgCyan)
+)
+
 func init() {
 	flag.Usage = func() {
 		h := "Transform JSON (from a file, URL, or stdin) into discrete assignments to make it greppable\n\n"
@@ -31,7 +40,7 @@ func init() {
 
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
-		h += "  -m, --monochrome Monochrome (don't colorize JSON)\n\n"
+		h += "  -m, --monochrome Monochrome (don't colorize output)\n\n"
 
 		h += "Exit Codes:\n"
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
@@ -58,11 +67,23 @@ var (
 	monochromeFlag bool
 )
 
+func init() {
+
+	jsoncolor.DefaultStringColor = strColor
+	jsoncolor.DefaultObjectColor = braceColor
+	jsoncolor.DefaultArrayColor = braceColor
+	jsoncolor.DefaultFieldColor = bareColor
+	jsoncolor.DefaultNumberColor = numColor
+	jsoncolor.DefaultTrueColor = boolColor
+	jsoncolor.DefaultFalseColor = boolColor
+	jsoncolor.DefaultNullColor = boolColor
+}
+
 func main() {
 	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
 	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
-	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize JSON)")
-	flag.BoolVar(&monochromeFlag, "m", false, "Monochrome (don't colorize JSON)")
+	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize output)")
+	flag.BoolVar(&monochromeFlag, "m", false, "Monochrome (don't colorize output)")
 
 	flag.Parse()
 

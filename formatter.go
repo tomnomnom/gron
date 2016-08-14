@@ -3,16 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/fatih/color"
-)
-
-var (
-	strColor   = color.New(color.FgYellow).SprintFunc()
-	braceColor = color.New(color.FgMagenta).SprintFunc()
-	bareColor  = color.New(color.FgBlue, color.Bold).SprintFunc()
-	numColor   = color.New(color.FgRed).SprintFunc()
-	boolColor  = color.New(color.FgCyan).SprintFunc()
 )
 
 // statementFormatters handle the formatting of statements
@@ -85,6 +75,15 @@ func (f monoFormatter) assignment(key string, value interface{}) string {
 // colorFormatter formats statements in color
 type colorFormatter struct{}
 
+// color sprint functions
+var (
+	sprintStrColor   = strColor.SprintFunc()
+	sprintBraceColor = braceColor.SprintFunc()
+	sprintBareColor  = bareColor.SprintFunc()
+	sprintNumColor   = numColor.SprintFunc()
+	sprintBoolColor  = boolColor.SprintFunc()
+)
+
 // value uses json.Marshal to format scalars
 // E.g:
 //     a string -> "a string"
@@ -102,19 +101,19 @@ func (f colorFormatter) value(s interface{}) string {
 // returns a new prefix or an error on failure
 func (f colorFormatter) prefix(prev string, next interface{}) (string, error) {
 	if prev == "json" {
-		prev = bareColor(prev)
+		prev = sprintBareColor(prev)
 	}
 
 	switch v := next.(type) {
 	case int:
 		// Next identifier is an array key
-		return prev + braceColor("[") + numColor(v) + braceColor("]"), nil
+		return prev + sprintBraceColor("[") + sprintNumColor(v) + sprintBraceColor("]"), nil
 	case string:
 		// Next identifier is an object key, either bare or quoted
 		if validIdentifier(v) {
-			return prev + "." + bareColor(v), nil
+			return prev + "." + sprintBareColor(v), nil
 		}
-		return prev + braceColor("[") + strColor(f.value(v)) + braceColor("]"), nil
+		return prev + sprintBraceColor("[") + sprintStrColor(f.value(v)) + sprintBraceColor("]"), nil
 	default:
 		return "", fmt.Errorf("could not form prefix for %#v", next)
 	}
@@ -123,7 +122,7 @@ func (f colorFormatter) prefix(prev string, next interface{}) (string, error) {
 // assignment formats an assignment
 func (f colorFormatter) assignment(key string, value interface{}) string {
 	if key == "json" {
-		key = bareColor(key)
+		key = sprintBareColor(key)
 	}
 
 	var valStr string
@@ -131,19 +130,19 @@ func (f colorFormatter) assignment(key string, value interface{}) string {
 	switch vv := value.(type) {
 
 	case map[string]interface{}:
-		valStr = braceColor("{}")
+		valStr = sprintBraceColor("{}")
 	case []interface{}:
-		valStr = braceColor("[]")
+		valStr = sprintBraceColor("[]")
 	case json.Number:
-		valStr = numColor(vv.String())
+		valStr = sprintNumColor(vv.String())
 	case float64:
-		valStr = numColor(f.value(vv))
+		valStr = sprintNumColor(f.value(vv))
 	case string:
-		valStr = strColor(f.value(vv))
+		valStr = sprintStrColor(f.value(vv))
 	case bool:
-		valStr = boolColor(fmt.Sprintf("%t", vv))
+		valStr = sprintBoolColor(fmt.Sprintf("%t", vv))
 	case nil:
-		valStr = boolColor("null")
+		valStr = sprintBoolColor("null")
 	}
 	return fmt.Sprintf("%s = %s;", key, valStr)
 }

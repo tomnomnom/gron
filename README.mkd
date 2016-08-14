@@ -172,7 +172,7 @@ Usage:
 
 Options:
   -u, --ungron     Reverse the operation (turn assignments back into JSON)
-  -m, --monochrome Monochrome (don't colorize JSON)
+  -m, --monochrome Monochrome (don't colorize output)
 
 Exit Codes:
   0 OK
