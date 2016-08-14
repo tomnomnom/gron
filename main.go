@@ -104,6 +104,11 @@ func main() {
 
 func gron(r io.Reader, w io.Writer) (int, error) {
 
+	formatter = colorFormatter{}
+	if monochromeFlag {
+		formatter = monoFormatter{}
+	}
+
 	ss, err := makeStatementsFromJSON(r)
 	if err != nil {
 		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,9 +11,9 @@ import (
 )
 
 // formatter is an interchangeable statement formatter. It's
-// interchangeable so that it can be swapped out with one
-// that, for example, uses colors
-var formatter monoFormatter
+// interchangeable so that it can be swapped between the
+// monochrome and color formatters
+var formatter statementFormatter = colorFormatter{}
 
 // statements is a list of assignment statements.
 // E.g statement: json.foo = "bar";
@@ -85,12 +86,18 @@ func (ss statements) Less(a, b int) bool {
 		return true
 	}
 
+	// The statements may contain ANSI color codes. We don't
+	// want to sort based on the colors so we need to strip
+	// them out first
+	aStr := stripColors(ss[a])
+	bStr := stripColors(ss[b])
+
 	// Find where the two strings start to differ, keeping track
 	// of where any numbers start so that we can compare them properly
 	numStart := -1
 	diffStart := -1
-	for i, ra := range ss[a] {
-		rb, _ := utf8.DecodeRuneInString(ss[b][i:])
+	for i, ra := range aStr {
+		rb, _ := utf8.DecodeRuneInString(bStr[i:])
 
 		// Are we looking at a number?
 		isNum := unicode.IsNumber(ra) && unicode.IsNumber(rb)
@@ -124,11 +131,42 @@ func (ss statements) Less(a, b int) bool {
 	// difference we found wasn't numeric, so do a regular comparison
 	// on the remainder of the strings
 	if numStart == -1 {
-		return ss[a][diffStart:] < ss[b][diffStart:]
+		return aStr[diffStart:] < bStr[diffStart:]
 	}
 
 	// Read and compare the numbers from each string
-	return readNum(ss[a][numStart:]) < readNum(ss[b][numStart:])
+	return readNum(aStr[numStart:]) < readNum(bStr[numStart:])
+}
+
+// stripColors removes ANSI colors from a string
+func stripColors(in string) string {
+	var buf bytes.Buffer
+
+	inColor := false
+	for i := 0; i < len(in); {
+		r, l := utf8.DecodeRuneInString(in[i:])
+		i += l
+
+		if inColor && r == 'm' {
+			inColor = false
+			continue
+		}
+
+		// Escape char
+		if r == 0x001B {
+			inColor = true
+		}
+
+		if inColor {
+			continue
+		}
+
+		// buf.WriteRune doesn't actually ever return
+		// an error, so it's safe to ignore it
+		_, _ = buf.WriteRune(r)
+	}
+
+	return buf.String()
 }
 
 // readNum reads digits from a string until it hits a non-digit,
@@ -153,6 +191,11 @@ func readNum(str string) int {
 // Mostly to make testing things easier
 func (ss statements) Contains(search string) bool {
 	for _, i := range ss {
+		// The Contains method is used exclusively for testing
+		// so while stripping the colors out of every statement
+		// every time Contains is called isn't very efficent,
+		// it won't affect users' performance.
+		i = stripColors(i)
 		if i == search {
 			return true
 		}
