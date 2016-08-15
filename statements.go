@@ -187,13 +187,13 @@ func readNum(str string) int {
 	return num
 }
 
-// Contains seaches the statements for a given statement
+// Contains searches the statements for a given statement
 // Mostly to make testing things easier
 func (ss statements) Contains(search string) bool {
 	for _, i := range ss {
 		// The Contains method is used exclusively for testing
 		// so while stripping the colors out of every statement
-		// every time Contains is called isn't very efficent,
+		// every time Contains is called isn't very efficient,
 		// it won't affect users' performance.
 		i = stripColors(i)
 		if i == search {

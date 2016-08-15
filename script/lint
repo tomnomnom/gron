@@ -10,4 +10,6 @@ if [ $? -ne 0 ]; then
     gometalinter --install
 fi
 
-gometalinter --disable=gocyclo --disable=dupl --disable=deadcode
+# dupl is disabled because it has a habbit of identifying tests as duplicated code.
+# in its defence: it's right. gocyclo is disabled because I'm a terrible programmer.
+gometalinter --disable=gocyclo --disable=dupl --enable=mispell --enable=goimports
