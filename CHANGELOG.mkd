@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+- Adds colorized gron output
+- Fixes formatting of large ints in ungron output (issue #12)
+
 ## 0.2.9
 - Adds colorized ungron output (thanks @nwidger!)
 - Adds 32 bit binaries to releases
