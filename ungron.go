@@ -282,7 +282,9 @@ func ungronTokens(ts []token) (interface{}, error) {
 
 	case typValue:
 		var val interface{}
-		err := json.Unmarshal([]byte(t.text), &val)
+		d := json.NewDecoder(strings.NewReader(t.text))
+		d.UseNumber()
+		err := d.Decode(&val)
 		if err != nil {
 			return nil, fmt.Errorf("failed to handle quoted key `%s`", t.text)
 		}
