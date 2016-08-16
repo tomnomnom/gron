@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+- Built with Go 1.7!
+- Up to 25% faster
+- 40% smaller binaries
+
 ## 0.3.0
 - Adds colorized gron output
 - Fixes formatting of large ints in ungron output (issue #12)
