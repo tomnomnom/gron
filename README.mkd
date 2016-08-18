@@ -99,6 +99,16 @@ Grep for something and easily see the path to it:
 json.contact.twitter = "@TomNomNom";
 ```
 
+gron makes diffing JSON easy too:
+
+```
+▶ diff <(gron two.json) <(gron two-b.json)
+3c3
+< json.contact.email = "mail@tomnomnom.com";
+---
+> json.contact.email = "contact@tomnomnom.com";
+```
+
 The output of `gron` is valid JavaScript:
 
 ```
