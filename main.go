@@ -63,12 +63,12 @@ func init() {
 	}
 }
 
-var (
-	ungronFlag     bool
-	monochromeFlag bool
-)
-
 func main() {
+	var (
+		ungronFlag     bool
+		monochromeFlag bool
+	)
+
 	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
 	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
 	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize output)")
@@ -97,13 +97,11 @@ func main() {
 		}
 	}
 
-	var exitCode int
-	var err error
+	var a actionFn = gron
 	if ungronFlag {
-		exitCode, err = ungron(raw, os.Stdout)
-	} else {
-		exitCode, err = gron(raw, os.Stdout)
+		a = ungron
 	}
+	exitCode, err := a(raw, os.Stdout, monochromeFlag)
 
 	if exitCode != exitOK {
 		fatal(exitCode, "Fatal", err)
@@ -112,10 +110,12 @@ func main() {
 	os.Exit(exitOK)
 }
 
-func gron(r io.Reader, w io.Writer) (int, error) {
+type actionFn func(io.Reader, io.Writer, bool) (int, error)
+
+func gron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 
 	formatter = colorFormatter{}
-	if monochromeFlag {
+	if monochrome {
 		formatter = monoFormatter{}
 	}
 
@@ -135,7 +135,7 @@ func gron(r io.Reader, w io.Writer) (int, error) {
 	return exitOK, nil
 }
 
-func ungron(r io.Reader, w io.Writer) (int, error) {
+func ungron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 	scanner := bufio.NewScanner(r)
 
 	// Make a list of statements from the input
@@ -170,7 +170,7 @@ func ungron(r io.Reader, w io.Writer) (int, error) {
 	}
 
 	// If the output isn't monochrome, add color to the JSON
-	if !monochromeFlag {
+	if !monochrome {
 		c, err := colorizeJSON(j)
 
 		// If we failed to colorize the JSON for whatever reason,
