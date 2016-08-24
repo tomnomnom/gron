@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -66,18 +67,6 @@ var (
 	ungronFlag     bool
 	monochromeFlag bool
 )
-
-func init() {
-
-	jsoncolor.DefaultStringColor = strColor
-	jsoncolor.DefaultObjectColor = braceColor
-	jsoncolor.DefaultArrayColor = braceColor
-	jsoncolor.DefaultFieldColor = bareColor
-	jsoncolor.DefaultNumberColor = numColor
-	jsoncolor.DefaultTrueColor = boolColor
-	jsoncolor.DefaultFalseColor = boolColor
-	jsoncolor.DefaultNullColor = boolColor
-}
 
 func main() {
 	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
@@ -174,18 +163,47 @@ func ungron(r io.Reader, w io.Writer) (int, error) {
 		}
 	}
 
-	marshalIndent := jsoncolor.MarshalIndent
-	if monochromeFlag {
-		marshalIndent = json.MarshalIndent
-	}
-	j, err := marshalIndent(merged, "", "  ")
+	// Marshal the output into JSON to display to the user
+	j, err := json.MarshalIndent(merged, "", "  ")
 	if err != nil {
 		return exitJSONEncode, fmt.Errorf("failed to convert statements to JSON: %s", err)
+	}
+
+	// If the output isn't monochrome, add color to the JSON
+	if !monochromeFlag {
+		c, err := colorizeJSON(j)
+
+		// If we failed to colorize the JSON for whatever reason,
+		// we'll just fall back to monochrome output, otherwise
+		// replace the monochrome JSON with glorious technicolor
+		if err == nil {
+			j = c
+		}
 	}
 
 	fmt.Fprintf(w, "%s\n", j)
 
 	return exitOK, nil
+}
+
+func colorizeJSON(src []byte) ([]byte, error) {
+	out := &bytes.Buffer{}
+	f := jsoncolor.NewFormatter()
+
+	f.StringColor = strColor
+	f.ObjectColor = braceColor
+	f.ArrayColor = braceColor
+	f.FieldColor = bareColor
+	f.NumberColor = numColor
+	f.TrueColor = boolColor
+	f.FalseColor = boolColor
+	f.NullColor = boolColor
+
+	err := f.Format(out, src)
+	if err != nil {
+		return out.Bytes(), err
+	}
+	return out.Bytes(), nil
 }
 
 func fatal(code int, msg string, err error) {
