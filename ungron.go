@@ -9,6 +9,12 @@ import (
 	"unicode/utf8"
 )
 
+var (
+	// errIgnored is a sentinel error returned by ungronTokens
+	// when a statement consists entirely of ignored tokens
+	errIgnored = fmt.Errorf("statement was ignored")
+)
+
 // A lexer holds the state for lexing statements
 type lexer struct {
 	text       string  // The raw input text
@@ -35,6 +41,9 @@ const (
 
 	// Any value; like 'true' in json = true; or 'foo' in json = "foo";
 	typValue
+
+	// Ignored tokens
+	typIgnored
 )
 
 // A token is a chunk of text from a statement with a type
@@ -188,6 +197,11 @@ func lexStatement(l *lexer) lexFn {
 		return lexBraces
 	case r == ' ':
 		return lexValue
+	case r == '-':
+		// grep -A etc can add '--' lines to output
+		// we'll save the text but not actually do
+		// anything with them
+		return lexIgnore
 	default:
 		return nil
 	}
@@ -268,11 +282,26 @@ func lexValue(l *lexer) lexFn {
 	return nil
 }
 
+// lexIgnore accepts runes until the end of the input
+// and emits them as a typIgnored token
+func lexIgnore(l *lexer) lexFn {
+	l.acceptRunFunc(func(r rune) bool {
+		return r != utf8.RuneError
+	})
+	l.emit(typIgnored)
+	return nil
+}
+
 // ungronTokens turns a slice of tokens into an actual datastructure
 func ungronTokens(ts []token) (interface{}, error) {
 	if len(ts) == 0 {
 		return nil, fmt.Errorf("zero tokens provided to ungronTokens")
 	}
+
+	if ts[0].typ == typIgnored {
+		return nil, errIgnored
+	}
+
 	if ts[len(ts)-1].typ != typValue {
 		return nil, fmt.Errorf("last token in slice is not a value")
 	}

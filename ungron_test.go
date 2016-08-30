@@ -71,6 +71,10 @@ func TestLex(t *testing.T) {
 		{`wat!`, []token{
 			{`wat`, typBare},
 		}},
+
+		{`--`, []token{
+			{`--`, typIgnored},
+		}},
 	}
 
 	for _, c := range cases {

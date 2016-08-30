@@ -54,6 +54,9 @@ func (ss statements) ungron() (interface{}, error) {
 		u, err := ungronTokens(l.lex())
 
 		if err != nil {
+			if err == errIgnored {
+				continue
+			}
 			return nil, fmt.Errorf("failed to translate tokens into datastructure: %s", err)
 		}
 
