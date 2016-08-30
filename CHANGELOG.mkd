@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.2
+- Adds handling of `--` lines produced by grep -A etc (issue #15)
+
 ## 0.3.1
 - Built with Go 1.7!
 - Up to 25% faster
