@@ -195,7 +195,7 @@ func lexStatement(l *lexer) lexFn {
 		return lexBareWord
 	case r == '[':
 		return lexBraces
-	case r == ' ':
+	case r == ' ', r == '=':
 		return lexValue
 	case r == '-':
 		// grep -A etc can add '--' lines to output
@@ -265,11 +265,11 @@ func lexQuotedKey(l *lexer) lexFn {
 
 // lexValue lexes a value at the end of a statement
 func lexValue(l *lexer) lexFn {
-	l.accept(" ")
+	l.acceptRun(" ")
 	if !l.accept("=") {
 		return nil
 	}
-	l.accept(" ")
+	l.acceptRun(" ")
 	l.ignore()
 
 	// If the value is a string we need to read until the end

@@ -75,6 +75,16 @@ func TestLex(t *testing.T) {
 		{`--`, []token{
 			{`--`, typIgnored},
 		}},
+
+		{`json  =  1;`, []token{
+			{`json`, typBare},
+			{`1`, typValue},
+		}},
+
+		{`json=1;`, []token{
+			{`json`, typBare},
+			{`1`, typValue},
+		}},
 	}
 
 	for _, c := range cases {
