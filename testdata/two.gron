@@ -1,0 +1,10 @@
+json = {};
+json.contact = {};
+json.contact.email = "mail@tomnomnom.com";
+json.contact.twitter = "@TomNomNom";
+json.github = "https://github.com/tomnomnom/";
+json.likes = [];
+json.likes[0] = "code";
+json.likes[1] = "cheese";
+json.likes[2] = "meat";
+json.name = "Tom";
