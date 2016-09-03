@@ -1,5 +1,9 @@
 # Changelog
 
+## HEAD
+- Slightly improved error reporting when ungronning
+- 20 second timeout on HTTP(s) requests (thanks @gummiboll!)
+
 ## 0.3.2
 - Adds handling of `--` lines produced by grep -A etc (issue #15)
 
