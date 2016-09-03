@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func validURL(url string) bool {
@@ -12,7 +13,9 @@ func validURL(url string) bool {
 }
 
 func getURL(url string) (io.Reader, error) {
-	var client http.Client
+	client := http.Client{
+		Timeout: 20 * time.Second,
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
