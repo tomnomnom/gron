@@ -183,6 +183,7 @@ Usage:
 Options:
   -u, --ungron     Reverse the operation (turn assignments back into JSON)
   -m, --monochrome Monochrome (don't colorize output)
+      --version    Print version information
 
 Exit Codes:
   0 OK

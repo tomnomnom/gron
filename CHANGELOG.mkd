@@ -1,8 +1,9 @@
 # Changelog
 
-## HEAD
+## 0.3.3
 - Slightly improved error reporting when ungronning
 - 20 second timeout on HTTP(s) requests (thanks @gummiboll!)
+- Version information added at build time + `--version` option (issue #19)
 
 ## 0.3.2
 - Adds handling of `--` lines produced by grep -A etc (issue #15)

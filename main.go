@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Exit codes
 const (
 	exitOK = iota
 	exitOpenFile
@@ -25,6 +26,7 @@ const (
 	exitJSONEncode
 )
 
+// Output colors
 var (
 	strColor   = color.New(color.FgYellow)
 	braceColor = color.New(color.FgMagenta)
@@ -32,6 +34,10 @@ var (
 	numColor   = color.New(color.FgRed)
 	boolColor  = color.New(color.FgCyan)
 )
+
+// gronVersion stores the current gron version, set at build
+// time with the ldflags -X option
+var gronVersion = "dev"
 
 func init() {
 	flag.Usage = func() {
@@ -42,7 +48,8 @@ func init() {
 
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
-		h += "  -m, --monochrome Monochrome (don't colorize output)\n\n"
+		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
+		h += "      --version    Print version information\n\n"
 
 		h += "Exit Codes:\n"
 		h += fmt.Sprintf("  %d\t%s\n", exitOK, "OK")
@@ -68,14 +75,22 @@ func main() {
 	var (
 		ungronFlag     bool
 		monochromeFlag bool
+		versionFlag    bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
 	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
 	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize output)")
 	flag.BoolVar(&monochromeFlag, "m", false, "Monochrome (don't colorize output)")
+	flag.BoolVar(&versionFlag, "version", false, "Print version information")
 
 	flag.Parse()
+
+	// Print version information
+	if versionFlag {
+		fmt.Printf("gron version %s\n", gronVersion)
+		os.Exit(exitOK)
+	}
 
 	var raw io.Reader
 
