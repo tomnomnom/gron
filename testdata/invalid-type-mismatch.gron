@@ -1,0 +1,2 @@
+json.foo = {};
+json.foo = [];

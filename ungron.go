@@ -21,11 +21,15 @@ import (
 	"unicode/utf8"
 )
 
-var (
-	// errIgnored is a sentinel error returned by ungronTokens
-	// when a statement consists entirely of ignored tokens
-	errIgnored = fmt.Errorf("statement was ignored")
-)
+// errRecoverable is an error type to represent errors that
+// can be recovered from; e.g. an empty line in the input
+type errRecoverable struct {
+	msg string
+}
+
+func (e errRecoverable) Error() string {
+	return e.msg
+}
 
 // A lexer holds the state for lexing statements
 type lexer struct {
@@ -307,15 +311,15 @@ func lexIgnore(l *lexer) lexFn {
 // ungronTokens turns a slice of tokens into an actual datastructure
 func ungronTokens(ts []token) (interface{}, error) {
 	if len(ts) == 0 {
-		return nil, fmt.Errorf("zero tokens provided to ungronTokens")
+		return nil, errRecoverable{"empty input"}
 	}
 
 	if ts[0].typ == typIgnored {
-		return nil, errIgnored
+		return nil, errRecoverable{"ignored token"}
 	}
 
 	if ts[len(ts)-1].typ != typValue {
-		return nil, fmt.Errorf("last token in slice is not a value")
+		return nil, fmt.Errorf("statement has no value")
 	}
 
 	t := ts[0]
@@ -327,7 +331,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		d.UseNumber()
 		err := d.Decode(&val)
 		if err != nil {
-			return nil, fmt.Errorf("failed to handle quoted key `%s`", t.text)
+			return nil, fmt.Errorf("invalid value `%s`", t.text)
 		}
 		return val, nil
 
@@ -348,7 +352,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		key := ""
 		err = json.Unmarshal([]byte(t.text), &key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to handle quoted key `%s`", t.text)
+			return nil, fmt.Errorf("invalid quoted key `%s`", t.text)
 		}
 
 		out := make(map[string]interface{})
@@ -358,7 +362,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 	case typNumeric:
 		key, err := strconv.Atoi(t.text)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert array key to int: %s", err)
+			return nil, fmt.Errorf("invalid integer key `%s`", t.text)
 		}
 
 		val, err := ungronTokens(ts[1:])
@@ -372,7 +376,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		return out, nil
 
 	default:
-		return nil, fmt.Errorf("failed to ungron tokens")
+		return nil, fmt.Errorf("unexpected token `%s`", t.text)
 	}
 }
 
@@ -383,14 +387,14 @@ func recursiveMerge(a, b interface{}) (interface{}, error) {
 	case map[string]interface{}:
 		bMap, ok := b.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("cannot merge map[string]interface{} with non-map")
+			return nil, fmt.Errorf("cannot merge object with non-object")
 		}
 		return recursiveMapMerge(a.(map[string]interface{}), bMap)
 
 	case []interface{}:
 		bSlice, ok := b.([]interface{})
 		if !ok {
-			return nil, fmt.Errorf("cannot merge []interface{} with non-slice")
+			return nil, fmt.Errorf("cannot merge array with non-array")
 		}
 		return recursiveSliceMerge(a.([]interface{}), bSlice)
 
@@ -399,7 +403,7 @@ func recursiveMerge(a, b interface{}) (interface{}, error) {
 		return b, nil
 
 	default:
-		return nil, fmt.Errorf("cannot merge datastructures that are not []interface{} or map[string]interface{}")
+		return nil, fmt.Errorf("unexpected data type for merge")
 	}
 }
 
@@ -415,7 +419,7 @@ func recursiveMapMerge(a, b map[string]interface{}) (map[string]interface{}, err
 			// Does exist, merge the values
 			merged, err := recursiveMerge(a[k], b[k])
 			if err != nil {
-				return nil, fmt.Errorf("error merging map values: %s", err)
+				return nil, err
 			}
 
 			a[k] = merged
@@ -444,7 +448,7 @@ func recursiveSliceMerge(a, b []interface{}) ([]interface{}, error) {
 		} else if v != nil {
 			merged, err := recursiveMerge(out[k], b[k])
 			if err != nil {
-				return nil, fmt.Errorf("error merging slice values: %s", err)
+				return nil, err
 			}
 			out[k] = merged
 		}

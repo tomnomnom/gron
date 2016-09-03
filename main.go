@@ -12,6 +12,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/nwidger/jsoncolor"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -85,13 +86,13 @@ func main() {
 		if !validURL(filename) {
 			r, err := os.Open(filename)
 			if err != nil {
-				fatal(exitOpenFile, "failed to open file", err)
+				fatal(exitOpenFile, err)
 			}
 			raw = r
 		} else {
 			r, err := getURL(filename)
 			if err != nil {
-				fatal(exitFetchURL, "failed to fetch URL", err)
+				fatal(exitFetchURL, err)
 			}
 			raw = r
 		}
@@ -104,7 +105,7 @@ func main() {
 	exitCode, err := a(raw, os.Stdout, monochromeFlag)
 
 	if exitCode != exitOK {
-		fatal(exitCode, "Fatal", err)
+		fatal(exitCode, err)
 	}
 
 	os.Exit(exitOK)
@@ -150,7 +151,7 @@ func ungron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 	// ungron the statements
 	merged, err := ss.ungron()
 	if err != nil {
-		return exitParseStatements, fmt.Errorf("failed to parse input statements")
+		return exitParseStatements, err
 	}
 
 	// If there's only one top level key and it's "json", make that the top level thing
@@ -166,7 +167,7 @@ func ungron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 	// Marshal the output into JSON to display to the user
 	j, err := json.MarshalIndent(merged, "", "  ")
 	if err != nil {
-		return exitJSONEncode, fmt.Errorf("failed to convert statements to JSON: %s", err)
+		return exitJSONEncode, errors.Wrap(err, "failed to convert statements to JSON")
 	}
 
 	// If the output isn't monochrome, add color to the JSON
@@ -206,7 +207,7 @@ func colorizeJSON(src []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func fatal(code int, msg string, err error) {
-	fmt.Fprintf(os.Stderr, "%s (%s)\n", msg, err)
+func fatal(code int, err error) {
+	fmt.Fprintf(os.Stderr, "%s\n", err)
 	os.Exit(code)
 }

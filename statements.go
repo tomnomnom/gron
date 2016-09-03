@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/pkg/errors"
 )
 
 // formatter is an interchangeable statement formatter. It's
@@ -53,11 +55,13 @@ func (ss statements) ungron() (interface{}, error) {
 		l := newLexer(s)
 		u, err := ungronTokens(l.lex())
 
-		if err != nil {
-			if err == errIgnored {
-				continue
-			}
-			return nil, fmt.Errorf("failed to translate tokens into datastructure: %s", err)
+		switch err.(type) {
+		case nil:
+			// no problem :)
+		case errRecoverable:
+			continue
+		default:
+			return nil, errors.Wrap(err, "ungron failed")
 		}
 
 		parsed = append(parsed, u)
@@ -71,7 +75,7 @@ func (ss statements) ungron() (interface{}, error) {
 	for _, p := range parsed[1:] {
 		m, err := recursiveMerge(merged, p)
 		if err != nil {
-			return nil, fmt.Errorf("failed to merge statements: %s", err)
+			return nil, errors.Wrap(err, "failed to merge statements")
 		}
 		merged = m
 	}
