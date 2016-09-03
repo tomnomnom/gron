@@ -70,6 +70,29 @@ func TestLex(t *testing.T) {
 
 		{`wat!`, []token{
 			{`wat`, typBare},
+			{``, typError},
+		}},
+
+		{`json[ = 1;`, []token{
+			{`json`, typBare},
+			{`[`, typError},
+		}},
+
+		{`json.[2] = 1;`, []token{
+			{`json`, typBare},
+			{``, typError},
+		}},
+
+		{`json[1 = 1;`, []token{
+			{`json`, typBare},
+			{`1`, typNumeric},
+			{``, typError},
+		}},
+
+		{`json["foo] = 1;`, []token{
+			{`json`, typBare},
+			{`"foo] = 1;`, typQuoted},
+			{``, typError},
 		}},
 
 		{`--`, []token{

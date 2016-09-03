@@ -61,7 +61,7 @@ func (ss statements) ungron() (interface{}, error) {
 		case errRecoverable:
 			continue
 		default:
-			return nil, errors.Wrap(err, "ungron failed")
+			return nil, errors.Wrapf(err, "ungron failed for `%s`", s)
 		}
 
 		parsed = append(parsed, u)

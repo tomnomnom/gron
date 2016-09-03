@@ -19,6 +19,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/pkg/errors"
 )
 
 // errRecoverable is an error type to represent errors that
@@ -60,6 +62,9 @@ const (
 
 	// Ignored tokens
 	typIgnored
+
+	// Error token
+	typError
 )
 
 // A token is a chunk of text from a statement with a type
@@ -155,11 +160,12 @@ type runeCheck func(rune) bool
 
 // acceptFunc accepts a rune if the provided runeCheck
 // function returns true
-func (l *lexer) acceptFunc(fn runeCheck) {
+func (l *lexer) acceptFunc(fn runeCheck) bool {
 	if fn(l.next()) {
-		return
+		return true
 	}
 	l.backup()
+	return false
 }
 
 // acceptRunFunc continually accepts runes for as long
@@ -218,7 +224,10 @@ func lexStatement(l *lexer) lexFn {
 		// we'll save the text but not actually do
 		// anything with them
 		return lexIgnore
+	case r == utf8.RuneError:
+		return nil
 	default:
+		l.emit(typError)
 		return nil
 	}
 
@@ -231,7 +240,10 @@ func lexBareWord(l *lexer) lexFn {
 	l.accept(".")
 	l.ignore()
 
-	l.acceptFunc(validFirstRune)
+	if !l.acceptFunc(validFirstRune) {
+		l.emit(typError)
+		return nil
+	}
 	l.acceptRunFunc(validSecondaryRune)
 	l.emit(typBare)
 
@@ -247,6 +259,7 @@ func lexBraces(l *lexer) lexFn {
 	case l.peek() == '"':
 		return lexQuotedKey
 	default:
+		l.emit(typError)
 		return nil
 	}
 }
@@ -259,7 +272,10 @@ func lexNumericKey(l *lexer) lexFn {
 	l.acceptRunFunc(unicode.IsNumber)
 	l.emit(typNumeric)
 
-	l.accept("]")
+	if !l.accept("]") {
+		l.emit(typError)
+		return nil
+	}
 	l.ignore()
 	return lexStatement
 }
@@ -269,12 +285,16 @@ func lexQuotedKey(l *lexer) lexFn {
 	l.accept("[")
 	l.ignore()
 
-	l.next()
+	l.accept("\"")
+
 	l.acceptUntilUnescaped("\"")
 	l.next()
 	l.emit(typQuoted)
 
-	l.accept("]")
+	if !l.accept("]") {
+		l.emit(typError)
+		return nil
+	}
 	l.ignore()
 	return lexStatement
 }
@@ -295,6 +315,9 @@ func lexValue(l *lexer) lexFn {
 	}
 	l.acceptUntil(";")
 	l.emit(typValue)
+
+	// The value should always be the last thing
+	// in the statement
 	return nil
 }
 
@@ -318,8 +341,12 @@ func ungronTokens(ts []token) (interface{}, error) {
 		return nil, errRecoverable{"ignored token"}
 	}
 
+	if ts[len(ts)-1].typ == typError {
+		return nil, errors.Errorf("invalid statement")
+	}
+
 	if ts[len(ts)-1].typ != typValue {
-		return nil, fmt.Errorf("statement has no value")
+		return nil, errors.New("statement has no value")
 	}
 
 	t := ts[0]
