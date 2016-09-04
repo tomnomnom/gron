@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"regexp"
 	"time"
 )
 
 func validURL(url string) bool {
-	return strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://")
+	r := regexp.MustCompile("(?i)^http(?:s)?://")
+	return r.MatchString(url)
 }
 
 func getURL(url string) (io.Reader, error) {
