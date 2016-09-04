@@ -1,0 +1,12 @@
+{
+  "contact": {
+    "email": "mail@tomnomnom.com",
+    "twitter": "@TomNomNom"
+  },
+  "likes": [
+     null,
+     null,
+     "meat"
+  ],
+  "name": "Tom"
+}
