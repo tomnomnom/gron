@@ -250,7 +250,7 @@ func BenchmarkMakeStatements(b *testing.B) {
 	}
 }
 
-func TestUngronStatements(t *testing.T) {
+func TestUngronStatementsSimple(t *testing.T) {
 	in := statements{
 		`json.contact = {};`,
 		`json.contact["e-mail"][0] = "mail@tomnomnom.com";`,
@@ -284,5 +284,20 @@ func TestUngronStatements(t *testing.T) {
 	eq := reflect.DeepEqual(have, want)
 	if !eq {
 		t.Errorf("have and want are not equal")
+	}
+}
+
+func TestUngronStatementsInvalid(t *testing.T) {
+	cases := []statements{
+		{``},
+		{`this isn't a statement at all`},
+		{`json[0] = 1;`, `json.bar = 1;`},
+	}
+
+	for _, c := range cases {
+		_, err := c.ungron()
+		if err == nil {
+			t.Errorf("want non-nil error; have nil")
+		}
 	}
 }

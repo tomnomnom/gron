@@ -130,7 +130,7 @@ func TestLex(t *testing.T) {
 	}
 }
 
-func TestUngronTokens(t *testing.T) {
+func TestUngronTokensSimple(t *testing.T) {
 	in := `json.contact["e-mail"][0] = "mail@tomnomnom.com";`
 	want := map[string]interface{}{
 		"json": map[string]interface{}{
@@ -156,6 +156,25 @@ func TestUngronTokens(t *testing.T) {
 	eq := reflect.DeepEqual(have, want)
 	if !eq {
 		t.Errorf("Have and want datastructures are unequal")
+	}
+}
+
+func TestUngronTokensInvalid(t *testing.T) {
+	cases := []struct {
+		in []token
+	}{
+		{[]token{{``, typError}}},                       // Error token
+		{[]token{{`foo`, typValue}}},                    // Invalid value
+		{[]token{{`"foo`, typQuoted}, {"1", typValue}}}, // Invalid quoted key
+		{[]token{{`foo`, typNumeric}, {"1", typValue}}}, // Invalid numeric key
+		{[]token{{``, -255}, {"1", typValue}}},          // Invalid token type
+	}
+
+	for _, c := range cases {
+		_, err := ungronTokens(c.in)
+		if err == nil {
+			t.Errorf("want non-nil error for %#v; have nil", c.in)
+		}
 	}
 }
 
