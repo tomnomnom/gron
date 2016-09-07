@@ -69,7 +69,8 @@ func (f monoFormatter) assignment(key string, value interface{}) string {
 	case nil:
 		valStr = "null"
 	}
-	return fmt.Sprintf("%s = %s;", key, valStr)
+	// concatenation has proven to be faster than fmt.Sprintf here
+	return key + " = " + valStr + ";"
 }
 
 // colorFormatter formats statements in color

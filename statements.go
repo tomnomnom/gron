@@ -96,8 +96,15 @@ func (ss statements) Less(a, b int) bool {
 	// The statements may contain ANSI color codes. We don't
 	// want to sort based on the colors so we need to strip
 	// them out first
-	aStr := stripColors(ss[a])
-	bStr := stripColors(ss[b])
+	var aStr, bStr string
+	switch formatter.(type) {
+	case colorFormatter:
+		aStr = stripColors(ss[a])
+		bStr = stripColors(ss[b])
+	default:
+		aStr = ss[a]
+		bStr = ss[b]
+	}
 
 	// Find where the two strings start to differ, keeping track
 	// of where any numbers start so that we can compare them properly

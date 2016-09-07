@@ -27,23 +27,45 @@ func TestPrefixHappy(t *testing.T) {
 	}
 }
 
-func BenchmarkMakePrefixUnquoted(b *testing.B) {
+func BenchmarkFormatterMakePrefixUnquoted(b *testing.B) {
 	var f monoFormatter
 	for i := 0; i < b.N; i++ {
 		_, _ = f.prefix("json", "isunquoted")
 	}
 }
 
-func BenchmarkMakePrefixQuoted(b *testing.B) {
+func BenchmarkFormatterMakePrefixQuoted(b *testing.B) {
 	var f monoFormatter
 	for i := 0; i < b.N; i++ {
 		_, _ = f.prefix("json", "this-is-quoted")
 	}
 }
 
-func BenchmarkMakePrefixInt(b *testing.B) {
+func BenchmarkFormatterMakePrefixInt(b *testing.B) {
 	var f monoFormatter
 	for i := 0; i < b.N; i++ {
 		_, _ = f.prefix("json", 212)
+	}
+}
+
+func BenchmarkFormatterAssignmentString(b *testing.B) {
+	var f monoFormatter
+	for i := 0; i < b.N; i++ {
+		_ = f.assignment("json.foo", "bar")
+	}
+}
+
+func BenchmarkFormatterAssignmentMap(b *testing.B) {
+	var f monoFormatter
+	val := make(map[string]interface{})
+	for i := 0; i < b.N; i++ {
+		_ = f.assignment("json.foo", val)
+	}
+}
+
+func BenchmarkFormatterValueString(b *testing.B) {
+	var f monoFormatter
+	for i := 0; i < b.N; i++ {
+		_ = f.value("a string")
 	}
 }

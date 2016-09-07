@@ -31,7 +31,7 @@ func TestGron(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := gron(in, out, true)
+		code, err := gron(in, out, optMonochrome)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -78,7 +78,7 @@ func TestUngron(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := ungron(in, out, true)
+		code, err := ungron(in, out, optMonochrome)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -99,5 +99,25 @@ func TestUngron(t *testing.T) {
 			t.Errorf("ungronned %s does not match %s", c.inFile, c.outFile)
 		}
 
+	}
+}
+
+func BenchmarkBigJSON(b *testing.B) {
+	in, err := os.Open("testdata/big.json")
+	if err != nil {
+		b.Fatalf("failed to open test data file: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		out := &bytes.Buffer{}
+		_, err = in.Seek(0, 0)
+		if err != nil {
+			b.Fatalf("failed to rewind input: %s", err)
+		}
+
+		_, err := gron(in, out, optMonochrome|optNoSort)
+		if err != nil {
+			b.Fatalf("failed to gron: %s", err)
+		}
 	}
 }

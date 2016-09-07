@@ -26,6 +26,12 @@ const (
 	exitJSONEncode
 )
 
+// Option bitfields
+const (
+	optMonochrome = iota + 1
+	optNoSort
+)
+
 // Output colors
 var (
 	strColor   = color.New(color.FgYellow)
@@ -49,6 +55,7 @@ func init() {
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
+		h += "      --no-sort    Don't sort output (faster)\n"
 		h += "      --version    Print version information\n\n"
 
 		h += "Exit Codes:\n"
@@ -75,14 +82,16 @@ func main() {
 	var (
 		ungronFlag     bool
 		monochromeFlag bool
+		noSortFlag     bool
 		versionFlag    bool
 	)
 
-	flag.BoolVar(&ungronFlag, "ungron", false, "Turn statements into JSON instead")
-	flag.BoolVar(&ungronFlag, "u", false, "Turn statements into JSON instead")
-	flag.BoolVar(&monochromeFlag, "monochrome", false, "Monochrome (don't colorize output)")
-	flag.BoolVar(&monochromeFlag, "m", false, "Monochrome (don't colorize output)")
-	flag.BoolVar(&versionFlag, "version", false, "Print version information")
+	flag.BoolVar(&ungronFlag, "ungron", false, "")
+	flag.BoolVar(&ungronFlag, "u", false, "")
+	flag.BoolVar(&monochromeFlag, "monochrome", false, "")
+	flag.BoolVar(&monochromeFlag, "m", false, "")
+	flag.BoolVar(&noSortFlag, "no-sort", false, "")
+	flag.BoolVar(&versionFlag, "version", false, "")
 
 	flag.Parse()
 
@@ -113,11 +122,19 @@ func main() {
 		}
 	}
 
+	var opts int
+	if monochromeFlag {
+		opts = opts | optMonochrome
+	}
+	if noSortFlag {
+		opts = opts | optNoSort
+	}
+
 	var a actionFn = gron
 	if ungronFlag {
 		a = ungron
 	}
-	exitCode, err := a(raw, os.Stdout, monochromeFlag)
+	exitCode, err := a(raw, os.Stdout, opts)
 
 	if exitCode != exitOK {
 		fatal(exitCode, err)
@@ -126,12 +143,12 @@ func main() {
 	os.Exit(exitOK)
 }
 
-type actionFn func(io.Reader, io.Writer, bool) (int, error)
+type actionFn func(io.Reader, io.Writer, int) (int, error)
 
-func gron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
+func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 
 	formatter = colorFormatter{}
-	if monochrome {
+	if opts&optMonochrome > 0 {
 		formatter = monoFormatter{}
 	}
 
@@ -142,7 +159,9 @@ func gron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 
 	// Go's maps do not have well-defined ordering, but we want a consistent
 	// output for a given input, so we must sort the statements
-	sort.Sort(ss)
+	if opts&optNoSort == 0 {
+		sort.Sort(ss)
+	}
 
 	for _, s := range ss {
 		fmt.Fprintln(w, s)
@@ -151,7 +170,7 @@ func gron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 	return exitOK, nil
 }
 
-func ungron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
+func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	scanner := bufio.NewScanner(r)
 
 	// Make a list of statements from the input
@@ -186,7 +205,7 @@ func ungron(r io.Reader, w io.Writer, monochrome bool) (int, error) {
 	}
 
 	// If the output isn't monochrome, add color to the JSON
-	if !monochrome {
+	if opts&optMonochrome == 0 {
 		c, err := colorizeJSON(j)
 
 		// If we failed to colorize the JSON for whatever reason,
