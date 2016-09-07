@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+- Speed improvements when using `--monochrome`
+- Adds `--no-sort` option
+
 ## 0.3.3
 - Slightly improved error reporting when ungronning
 - 20 second timeout on HTTP(s) requests (thanks @gummiboll!)
