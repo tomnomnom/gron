@@ -12,52 +12,82 @@ func TestLex(t *testing.T) {
 	}{
 		{`json.foo = 1;`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{`foo`, typBare},
+			{`=`, typEquals},
 			{`1`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json.foo = "bar";`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{`foo`, typBare},
+			{`=`, typEquals},
 			{`"bar"`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json.foo = "ba;r";`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{`foo`, typBare},
+			{`=`, typEquals},
 			{`"ba;r"`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json.foo = "ba\"r ;";`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{`foo`, typBare},
+			{`=`, typEquals},
 			{`"ba\"r ;"`, typValue},
+			{`;`, typSemi},
 		}},
 
-		{`json.value = "\u003c ;"`, []token{
+		{`json.value = "\u003c ;";`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{`value`, typBare},
+			{`=`, typEquals},
 			{`"\u003c ;"`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json[0] = "bar";`, []token{
 			{`json`, typBare},
+			{`[`, typLBrace},
 			{`0`, typNumeric},
+			{`]`, typRBrace},
+			{`=`, typEquals},
 			{`"bar"`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json["foo"] = "bar";`, []token{
 			{`json`, typBare},
+			{`[`, typLBrace},
 			{`"foo"`, typQuoted},
+			{`]`, typRBrace},
+			{`=`, typEquals},
 			{`"bar"`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json.foo["bar"][0] = "bar";`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{`foo`, typBare},
+			{`[`, typLBrace},
 			{`"bar"`, typQuoted},
+			{`]`, typRBrace},
+			{`[`, typLBrace},
 			{`0`, typNumeric},
+			{`]`, typRBrace},
+			{`=`, typEquals},
 			{`"bar"`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`not an identifier at all`, []token{
@@ -75,22 +105,26 @@ func TestLex(t *testing.T) {
 
 		{`json[ = 1;`, []token{
 			{`json`, typBare},
-			{`[`, typError},
+			{`[`, typLBrace},
+			{``, typError},
 		}},
 
 		{`json.[2] = 1;`, []token{
 			{`json`, typBare},
+			{`.`, typDot},
 			{``, typError},
 		}},
 
 		{`json[1 = 1;`, []token{
 			{`json`, typBare},
+			{`[`, typLBrace},
 			{`1`, typNumeric},
 			{``, typError},
 		}},
 
 		{`json["foo] = 1;`, []token{
 			{`json`, typBare},
+			{`[`, typLBrace},
 			{`"foo] = 1;`, typQuoted},
 			{``, typError},
 		}},
@@ -101,12 +135,16 @@ func TestLex(t *testing.T) {
 
 		{`json  =  1;`, []token{
 			{`json`, typBare},
+			{`=`, typEquals},
 			{`1`, typValue},
+			{`;`, typSemi},
 		}},
 
 		{`json=1;`, []token{
 			{`json`, typBare},
+			{`=`, typEquals},
 			{`1`, typValue},
+			{`;`, typSemi},
 		}},
 	}
 
@@ -115,6 +153,7 @@ func TestLex(t *testing.T) {
 		have := l.lex()
 
 		if len(have) != len(c.want) {
+			t.Logf("Input: %#v", c.in)
 			t.Logf("Want: %#v", c.want)
 			t.Logf("Have: %#v", have)
 			t.Fatalf("want %d tokens, have %d", len(c.want), len(have))
@@ -122,6 +161,7 @@ func TestLex(t *testing.T) {
 
 		for i := range have {
 			if have[i] != c.want[i] {
+				t.Logf("Input: %#v", c.in)
 				t.Logf("Want: %#v", c.want)
 				t.Logf("Have: %#v", have)
 				t.Errorf("Want `%#v` in position %d, have `%#v`", c.want[i], i, have[i])

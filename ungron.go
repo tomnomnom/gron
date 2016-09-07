@@ -60,7 +60,22 @@ const (
 	// Any value; like 'true' in json = true; or 'foo' in json = "foo";
 	typValue
 
-	// Ignored tokens
+	// A dot
+	typDot
+
+	// Opening square brace: [
+	typLBrace
+
+	// Closing square brace: ]
+	typRBrace
+
+	// An equals sign: =
+	typEquals
+
+	// A semicolon: ;
+	typSemi
+
+	// Ignored token
 	typIgnored
 
 	// Error token
@@ -236,9 +251,9 @@ func lexStatement(l *lexer) lexFn {
 // lexBareWord lexes for bare identifiers.
 // E.g: the 'foo' in 'foo.bar' or 'foo[0]' is a bare identifier
 func lexBareWord(l *lexer) lexFn {
-	// Skip over a starting dot
-	l.accept(".")
-	l.ignore()
+	if l.accept(".") {
+		l.emit(typDot)
+	}
 
 	if !l.acceptFunc(validFirstRune) {
 		l.emit(typError)
@@ -253,6 +268,8 @@ func lexBareWord(l *lexer) lexFn {
 // lexBraces lexes keys contained within square braces
 func lexBraces(l *lexer) lexFn {
 	l.accept("[")
+	l.emit(typLBrace)
+
 	switch {
 	case unicode.IsNumber(l.peek()):
 		return lexNumericKey
@@ -272,7 +289,9 @@ func lexNumericKey(l *lexer) lexFn {
 	l.acceptRunFunc(unicode.IsNumber)
 	l.emit(typNumeric)
 
-	if !l.accept("]") {
+	if l.accept("]") {
+		l.emit(typRBrace)
+	} else {
 		l.emit(typError)
 		return nil
 	}
@@ -291,7 +310,9 @@ func lexQuotedKey(l *lexer) lexFn {
 	l.next()
 	l.emit(typQuoted)
 
-	if !l.accept("]") {
+	if l.accept("]") {
+		l.emit(typRBrace)
+	} else {
 		l.emit(typError)
 		return nil
 	}
@@ -302,7 +323,11 @@ func lexQuotedKey(l *lexer) lexFn {
 // lexValue lexes a value at the end of a statement
 func lexValue(l *lexer) lexFn {
 	l.acceptRun(" ")
-	if !l.accept("=") {
+	l.ignore()
+
+	if l.accept("=") {
+		l.emit(typEquals)
+	} else {
 		return nil
 	}
 	l.acceptRun(" ")
@@ -315,6 +340,10 @@ func lexValue(l *lexer) lexFn {
 	}
 	l.acceptUntil(";")
 	l.emit(typValue)
+
+	if l.accept(";") {
+		l.emit(typSemi)
+	}
 
 	// The value should always be the last thing
 	// in the statement
@@ -342,15 +371,25 @@ func ungronTokens(ts []token) (interface{}, error) {
 	}
 
 	if ts[len(ts)-1].typ == typError {
-		return nil, errors.Errorf("invalid statement")
+		return nil, errors.New("invalid statement")
 	}
 
-	if ts[len(ts)-1].typ != typValue {
+	// The last token should be typSemi so we need to check
+	// the second to last token is a value rather than the
+	// last one
+	if len(ts) > 1 && ts[len(ts)-2].typ != typValue {
 		return nil, errors.New("statement has no value")
 	}
 
 	t := ts[0]
 	switch t.typ {
+	case typDot, typLBrace, typRBrace, typEquals, typSemi:
+		// Skip the token
+		val, err := ungronTokens(ts[1:])
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
 
 	case typValue:
 		var val interface{}
