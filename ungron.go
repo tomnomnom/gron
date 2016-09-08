@@ -44,68 +44,6 @@ type lexer struct {
 	tokenStart int     // The starting position of the current token
 }
 
-// A tokenTyp identifies what kind of token something is
-type tokenTyp int
-
-const (
-	// A bare word is a unquoted key; like 'foo' in json.foo = 1;
-	typBare tokenTyp = iota
-
-	// Numeric key; like '2' in json[2] = "foo";
-	typNumericKey
-
-	// A quoted key; like 'foo bar' in json["foo bar"] = 2;
-	typQuotedKey
-
-	// Punctuation types
-	typDot    // .
-	typLBrace // [
-	typRBrace // ]
-	typEquals // =
-	typSemi   // ;
-
-	// Value types
-	typString      // "foo"
-	typNumber      // 4
-	typTrue        // true
-	typFalse       // false
-	typNull        // null
-	typEmptyArray  // []
-	typEmptyObject // {}
-
-	// Ignored token
-	typIgnored
-
-	// Error token
-	typError
-)
-
-// isValue returns true if the token is a valid value
-func (t token) isValue() bool {
-	switch t.typ {
-	case typString, typNumber, typTrue, typFalse, typNull, typEmptyArray, typEmptyObject:
-		return true
-	default:
-		return false
-	}
-}
-
-// isPunct returns true is the token is punctuation
-func (t token) isPunct() bool {
-	switch t.typ {
-	case typDot, typLBrace, typRBrace, typEquals, typSemi:
-		return true
-	default:
-		return false
-	}
-}
-
-// A token is a chunk of text from a statement with a type
-type token struct {
-	text string
-	typ  tokenTyp
-}
-
 // newLexer returns a new lexer for the provided input string
 func newLexer(text string) *lexer {
 	return &lexer{
@@ -116,8 +54,8 @@ func newLexer(text string) *lexer {
 	}
 }
 
-// lex runs the lexer and returns the lexed tokens
-func (l *lexer) lex() []token {
+// lex runs the lexer and returns the lexed statement
+func (l *lexer) lex() statement {
 
 	for lexfn := lexStatement; lexfn != nil; {
 		lexfn = lexfn(l)

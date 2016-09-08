@@ -147,11 +147,6 @@ type actionFn func(io.Reader, io.Writer, int) (int, error)
 
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 
-	formatter = colorFormatter{}
-	if opts&optMonochrome > 0 {
-		formatter = monoFormatter{}
-	}
-
 	ss, err := makeStatementsFromJSON(r)
 	if err != nil {
 		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
@@ -163,8 +158,14 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 		sort.Sort(ss)
 	}
 
-	for _, s := range ss {
-		fmt.Fprintln(w, s)
+	if opts&optMonochrome > 0 {
+		for _, s := range ss {
+			fmt.Fprintln(w, s.String())
+		}
+	} else {
+		for _, s := range ss {
+			fmt.Fprintln(w, s.colorString())
+		}
 	}
 
 	return exitOK, nil
@@ -176,7 +177,8 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	// Make a list of statements from the input
 	var ss statements
 	for scanner.Scan() {
-		ss.AddFull(scanner.Text())
+		s := statementFromString(scanner.Text())
+		ss.AddFull(s)
 	}
 	if err := scanner.Err(); err != nil {
 		return exitReadInput, fmt.Errorf("failed to read input statements")
