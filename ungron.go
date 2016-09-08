@@ -52,28 +52,26 @@ const (
 	typBare tokenTyp = iota
 
 	// Numeric key; like '2' in json[2] = "foo";
-	typNumeric
+	typNumericKey
 
 	// A quoted key; like 'foo bar' in json["foo bar"] = 2;
-	typQuoted
+	typQuotedKey
 
-	// Any value; like 'true' in json = true; or 'foo' in json = "foo";
-	typValue
+	// Punctuation types
+	typDot    // .
+	typLBrace // [
+	typRBrace // ]
+	typEquals // =
+	typSemi   // ;
 
-	// A dot
-	typDot
-
-	// Opening square brace: [
-	typLBrace
-
-	// Closing square brace: ]
-	typRBrace
-
-	// An equals sign: =
-	typEquals
-
-	// A semicolon: ;
-	typSemi
+	// Value types
+	typString      // "foo"
+	typNumber      // 4
+	typTrue        // true
+	typFalse       // false
+	typNull        // null
+	typEmptyArray  // []
+	typEmptyObject // {}
 
 	// Ignored token
 	typIgnored
@@ -81,6 +79,26 @@ const (
 	// Error token
 	typError
 )
+
+// isValue returns true if the token is a valid value
+func (t token) isValue() bool {
+	switch t.typ {
+	case typString, typNumber, typTrue, typFalse, typNull, typEmptyArray, typEmptyObject:
+		return true
+	default:
+		return false
+	}
+}
+
+// isPunct returns true is the token is punctuation
+func (t token) isPunct() bool {
+	switch t.typ {
+	case typDot, typLBrace, typRBrace, typEquals, typSemi:
+		return true
+	default:
+		return false
+	}
+}
 
 // A token is a chunk of text from a statement with a type
 type token struct {
@@ -287,7 +305,7 @@ func lexNumericKey(l *lexer) lexFn {
 	l.ignore()
 
 	l.acceptRunFunc(unicode.IsNumber)
-	l.emit(typNumeric)
+	l.emit(typNumericKey)
 
 	if l.accept("]") {
 		l.emit(typRBrace)
@@ -304,11 +322,11 @@ func lexQuotedKey(l *lexer) lexFn {
 	l.accept("[")
 	l.ignore()
 
-	l.accept("\"")
+	l.accept(`"`)
 
-	l.acceptUntilUnescaped("\"")
-	l.next()
-	l.emit(typQuoted)
+	l.acceptUntilUnescaped(`"`)
+	l.accept(`"`)
+	l.emit(typQuotedKey)
 
 	if l.accept("]") {
 		l.emit(typRBrace)
@@ -333,13 +351,41 @@ func lexValue(l *lexer) lexFn {
 	l.acceptRun(" ")
 	l.ignore()
 
-	// If the value is a string we need to read until the end
-	// of the string incase there's a semicolon in it
-	if l.accept("\"") {
-		l.acceptUntilUnescaped("\"")
+	switch {
+
+	case l.accept(`"`):
+		l.acceptUntilUnescaped(`"`)
+		l.accept(`"`)
+		l.emit(typString)
+
+	case l.accept("t"):
+		l.acceptRun("rue")
+		l.emit(typTrue)
+
+	case l.accept("f"):
+		l.acceptRun("alse")
+		l.emit(typFalse)
+
+	case l.accept("n"):
+		l.acceptRun("ul")
+		l.emit(typNull)
+
+	case l.accept("["):
+		l.accept("]")
+		l.emit(typEmptyArray)
+
+	case l.accept("{"):
+		l.accept("}")
+		l.emit(typEmptyObject)
+
+	default:
+		// Assume number
+		l.acceptUntil(";")
+		l.emit(typNumber)
 	}
-	l.acceptUntil(";")
-	l.emit(typValue)
+
+	l.acceptRun(" ")
+	l.ignore()
 
 	if l.accept(";") {
 		l.emit(typSemi)
@@ -377,13 +423,13 @@ func ungronTokens(ts []token) (interface{}, error) {
 	// The last token should be typSemi so we need to check
 	// the second to last token is a value rather than the
 	// last one
-	if len(ts) > 1 && ts[len(ts)-2].typ != typValue {
+	if len(ts) > 1 && !ts[len(ts)-2].isValue() {
 		return nil, errors.New("statement has no value")
 	}
 
 	t := ts[0]
-	switch t.typ {
-	case typDot, typLBrace, typRBrace, typEquals, typSemi:
+	switch {
+	case t.isPunct():
 		// Skip the token
 		val, err := ungronTokens(ts[1:])
 		if err != nil {
@@ -391,7 +437,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		}
 		return val, nil
 
-	case typValue:
+	case t.isValue():
 		var val interface{}
 		d := json.NewDecoder(strings.NewReader(t.text))
 		d.UseNumber()
@@ -401,7 +447,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		}
 		return val, nil
 
-	case typBare:
+	case t.typ == typBare:
 		val, err := ungronTokens(ts[1:])
 		if err != nil {
 			return nil, err
@@ -410,7 +456,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		out[t.text] = val
 		return out, nil
 
-	case typQuoted:
+	case t.typ == typQuotedKey:
 		val, err := ungronTokens(ts[1:])
 		if err != nil {
 			return nil, err
@@ -425,7 +471,7 @@ func ungronTokens(ts []token) (interface{}, error) {
 		out[key] = val
 		return out, nil
 
-	case typNumeric:
+	case t.typ == typNumericKey:
 		key, err := strconv.Atoi(t.text)
 		if err != nil {
 			return nil, fmt.Errorf("invalid integer key `%s`", t.text)

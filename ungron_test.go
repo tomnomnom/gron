@@ -15,7 +15,7 @@ func TestLex(t *testing.T) {
 			{`.`, typDot},
 			{`foo`, typBare},
 			{`=`, typEquals},
-			{`1`, typValue},
+			{`1`, typNumber},
 			{`;`, typSemi},
 		}},
 
@@ -24,7 +24,7 @@ func TestLex(t *testing.T) {
 			{`.`, typDot},
 			{`foo`, typBare},
 			{`=`, typEquals},
-			{`"bar"`, typValue},
+			{`"bar"`, typString},
 			{`;`, typSemi},
 		}},
 
@@ -33,7 +33,7 @@ func TestLex(t *testing.T) {
 			{`.`, typDot},
 			{`foo`, typBare},
 			{`=`, typEquals},
-			{`"ba;r"`, typValue},
+			{`"ba;r"`, typString},
 			{`;`, typSemi},
 		}},
 
@@ -42,7 +42,7 @@ func TestLex(t *testing.T) {
 			{`.`, typDot},
 			{`foo`, typBare},
 			{`=`, typEquals},
-			{`"ba\"r ;"`, typValue},
+			{`"ba\"r ;"`, typString},
 			{`;`, typSemi},
 		}},
 
@@ -51,27 +51,27 @@ func TestLex(t *testing.T) {
 			{`.`, typDot},
 			{`value`, typBare},
 			{`=`, typEquals},
-			{`"\u003c ;"`, typValue},
+			{`"\u003c ;"`, typString},
 			{`;`, typSemi},
 		}},
 
 		{`json[0] = "bar";`, []token{
 			{`json`, typBare},
 			{`[`, typLBrace},
-			{`0`, typNumeric},
+			{`0`, typNumericKey},
 			{`]`, typRBrace},
 			{`=`, typEquals},
-			{`"bar"`, typValue},
+			{`"bar"`, typString},
 			{`;`, typSemi},
 		}},
 
 		{`json["foo"] = "bar";`, []token{
 			{`json`, typBare},
 			{`[`, typLBrace},
-			{`"foo"`, typQuoted},
+			{`"foo"`, typQuotedKey},
 			{`]`, typRBrace},
 			{`=`, typEquals},
-			{`"bar"`, typValue},
+			{`"bar"`, typString},
 			{`;`, typSemi},
 		}},
 
@@ -80,13 +80,13 @@ func TestLex(t *testing.T) {
 			{`.`, typDot},
 			{`foo`, typBare},
 			{`[`, typLBrace},
-			{`"bar"`, typQuoted},
+			{`"bar"`, typQuotedKey},
 			{`]`, typRBrace},
 			{`[`, typLBrace},
-			{`0`, typNumeric},
+			{`0`, typNumericKey},
 			{`]`, typRBrace},
 			{`=`, typEquals},
-			{`"bar"`, typValue},
+			{`"bar"`, typString},
 			{`;`, typSemi},
 		}},
 
@@ -118,14 +118,14 @@ func TestLex(t *testing.T) {
 		{`json[1 = 1;`, []token{
 			{`json`, typBare},
 			{`[`, typLBrace},
-			{`1`, typNumeric},
+			{`1`, typNumericKey},
 			{``, typError},
 		}},
 
 		{`json["foo] = 1;`, []token{
 			{`json`, typBare},
 			{`[`, typLBrace},
-			{`"foo] = 1;`, typQuoted},
+			{`"foo] = 1;`, typQuotedKey},
 			{``, typError},
 		}},
 
@@ -136,14 +136,14 @@ func TestLex(t *testing.T) {
 		{`json  =  1;`, []token{
 			{`json`, typBare},
 			{`=`, typEquals},
-			{`1`, typValue},
+			{`1`, typNumber},
 			{`;`, typSemi},
 		}},
 
 		{`json=1;`, []token{
 			{`json`, typBare},
 			{`=`, typEquals},
-			{`1`, typValue},
+			{`1`, typNumber},
 			{`;`, typSemi},
 		}},
 	}
@@ -203,11 +203,11 @@ func TestUngronTokensInvalid(t *testing.T) {
 	cases := []struct {
 		in []token
 	}{
-		{[]token{{``, typError}}},                       // Error token
-		{[]token{{`foo`, typValue}}},                    // Invalid value
-		{[]token{{`"foo`, typQuoted}, {"1", typValue}}}, // Invalid quoted key
-		{[]token{{`foo`, typNumeric}, {"1", typValue}}}, // Invalid numeric key
-		{[]token{{``, -255}, {"1", typValue}}},          // Invalid token type
+		{[]token{{``, typError}}},                           // Error token
+		{[]token{{`foo`, typString}}},                       // Invalid value
+		{[]token{{`"foo`, typQuotedKey}, {"1", typNumber}}}, // Invalid quoted key
+		{[]token{{`foo`, typNumericKey}, {"1", typNumber}}}, // Invalid numeric key
+		{[]token{{``, -255}, {"1", typNumber}}},             // Invalid token type
 	}
 
 	for _, c := range cases {
