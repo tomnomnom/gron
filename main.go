@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/fatih/color"
+	isatty "github.com/mattn/go-isatty"
 	"github.com/nwidger/jsoncolor"
 	"github.com/pkg/errors"
 )
@@ -123,7 +124,9 @@ func main() {
 	}
 
 	var opts int
-	if monochromeFlag {
+	// The monochrome option should be forced if the output isn't a terminal
+	// to avoid doing unnecessary work calling the color functions
+	if monochromeFlag || !isatty.IsTerminal(os.Stdout.Fd()) {
 		opts = opts | optMonochrome
 	}
 	if noSortFlag {
