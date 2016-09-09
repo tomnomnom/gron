@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.5
+- General performance improvements; 5 to 17 times faster (see issue #21 for details)
+
 ## 0.3.4
 - Speed improvements when using `--monochrome`
 - Adds `--no-sort` option
