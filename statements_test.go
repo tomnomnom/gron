@@ -128,7 +128,7 @@ func BenchmarkFill(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ss := make(statements, 0)
-		_ = ss.fill(statement{{"json", typBare}}, top)
+		ss.fill(statement{{"json", typBare}}, top)
 	}
 }
 

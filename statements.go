@@ -209,13 +209,13 @@ func statementsFromJSON(r io.Reader) (statements, error) {
 		return nil, err
 	}
 	ss := make(statements, 0, 32)
-	err = ss.fill(statement{{"json", typBare}}, top)
-	return ss, err
+	ss.fill(statement{{"json", typBare}}, top)
+	return ss, nil
 }
 
 // fill takes a prefix statement and some value and recursively fills
 // the statement list using that value
-func (ss *statements) fill(prefix statement, v interface{}) error {
+func (ss *statements) fill(prefix statement, v interface{}) {
 
 	// Add a statement for the current prefix and value
 	ss.Add(prefix, valueTokenFromInterface(v))
@@ -232,21 +232,14 @@ func (ss *statements) fill(prefix statement, v interface{}) error {
 			} else {
 				newPrefix = prefix.withQuotedKey(k)
 			}
-			err := ss.fill(newPrefix, sub)
-			if err != nil {
-				return err
-			}
+			ss.fill(newPrefix, sub)
 		}
 
 	case []interface{}:
 		// It's an array
 		for k, sub := range vv {
-			err := ss.fill(prefix.withNumericKey(k), sub)
-			if err != nil {
-				return err
-			}
+			ss.fill(prefix.withNumericKey(k), sub)
 		}
 	}
 
-	return nil
 }
