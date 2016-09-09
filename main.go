@@ -181,7 +181,7 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	var ss statements
 	for scanner.Scan() {
 		s := statementFromString(scanner.Text())
-		ss.AddFull(s)
+		ss.addFull(s)
 	}
 	if err := scanner.Err(); err != nil {
 		return exitReadInput, fmt.Errorf("failed to read input statements")

@@ -24,6 +24,7 @@ func (s statement) String() string {
 	return strings.Join(out, "")
 }
 
+// colorString returns the string form of a statement with ASCII color codes
 func (s statement) colorString() string {
 	out := make([]string, 0, len(s)+2)
 	for _, t := range s {
@@ -32,6 +33,8 @@ func (s statement) colorString() string {
 	return strings.Join(out, "")
 }
 
+// withBare returns a copy of a statement with a new bare
+// word token appended to it
 func (s statement) withBare(k string) statement {
 	return append(
 		s,
@@ -40,6 +43,8 @@ func (s statement) withBare(k string) statement {
 	)
 }
 
+// withQuotedKey returns a copy of a statement with a new
+// quoted key token appended to it
 func (s statement) withQuotedKey(k string) statement {
 	return append(
 		s,
@@ -49,6 +54,8 @@ func (s statement) withQuotedKey(k string) statement {
 	)
 }
 
+// withNumericKey returns a copy of a statement with a new
+// numeric key token appended to it
 func (s statement) withNumericKey(k int) statement {
 	return append(s,
 		token{"[", typLBrace},
@@ -61,14 +68,15 @@ func (s statement) withNumericKey(k int) statement {
 // E.g statement: json.foo = "bar";
 type statements []statement
 
-// Add makes a copy of a statement and appends it to the list of statements
-func (ss *statements) Add(s statement, new token) {
+// add takes a statement representing a path and a value token and appends
+// it to the list of statements as a complete assignment
+func (ss *statements) add(s statement, new token) {
 	add := append(s, token{"=", typEquals}, new, token{";", typSemi})
 	*ss = append(*ss, add)
 }
 
-// AddFull adds a new statement to the list given the entire statement
-func (ss *statements) AddFull(s statement) {
+// addFull appends a new complete statement to list of statements
+func (ss *statements) addFull(s statement) {
 	*ss = append(*ss, s)
 }
 
@@ -218,7 +226,7 @@ func statementsFromJSON(r io.Reader) (statements, error) {
 func (ss *statements) fill(prefix statement, v interface{}) {
 
 	// Add a statement for the current prefix and value
-	ss.Add(prefix, valueTokenFromInterface(v))
+	ss.add(prefix, valueTokenFromInterface(v))
 
 	// Recurse into objects and arrays
 	switch vv := v.(type) {
