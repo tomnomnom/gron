@@ -63,24 +63,18 @@ type statements []statement
 
 // Add makes a copy of a statement and appends it to the list of statements
 func (ss *statements) Add(s statement, new token) {
-	add := make(statement, len(s), len(s)+3)
-	copy(add, s)
-	add = append(add, token{"=", typEquals}, new, token{";", typSemi})
+	add := append(s, token{"=", typEquals}, new, token{";", typSemi})
 	*ss = append(*ss, add)
 }
 
 // AddFull adds a new statement to the list given the entire statement
 func (ss *statements) AddFull(s statement) {
-	add := make(statement, len(s))
-	copy(add, s)
-	*ss = append(*ss, add)
+	*ss = append(*ss, s)
 }
 
 // AddMulti adds a whole other list of statements
 func (ss *statements) AddMulti(l statements) {
-	add := make(statements, len(l))
-	copy(add, l)
-	*ss = append(*ss, add...)
+	*ss = append(*ss, l...)
 }
 
 // Len returns the number of statements for sort.Sort
