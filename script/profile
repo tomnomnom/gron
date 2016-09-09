@@ -3,5 +3,10 @@ set -e
 PROJDIR=$(cd `dirname $0`/.. && pwd)
 cd ${PROJDIR}
 
-go test -bench . -benchmem -cpuprofile cpu.out
+PAT="."
+if [ ! -z "${1}" ]; then
+    PAT="${1}"
+fi
+
+go test -bench ${PAT} -benchmem -cpuprofile cpu.out
 go tool pprof gron.test cpu.out
