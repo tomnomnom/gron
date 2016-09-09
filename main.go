@@ -150,7 +150,7 @@ type actionFn func(io.Reader, io.Writer, int) (int, error)
 
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 
-	ss, err := makeStatementsFromJSON(r)
+	ss, err := statementsFromJSON(r)
 	if err != nil {
 		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
 	}

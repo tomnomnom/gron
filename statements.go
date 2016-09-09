@@ -72,11 +72,6 @@ func (ss *statements) AddFull(s statement) {
 	*ss = append(*ss, s)
 }
 
-// AddMulti adds a whole other list of statements
-func (ss *statements) AddMulti(l statements) {
-	*ss = append(*ss, l...)
-}
-
 // Len returns the number of statements for sort.Sort
 func (ss statements) Len() int {
 	return len(ss)
@@ -203,9 +198,9 @@ func (ss statements) Contains(search statement) bool {
 	return false
 }
 
-// makeStatementsFromJSON takes an io.Reader containing JSON
+// statementsFromJSON takes an io.Reader containing JSON
 // and returns statements or an error on failure
-func makeStatementsFromJSON(r io.Reader) (statements, error) {
+func statementsFromJSON(r io.Reader) (statements, error) {
 	var top interface{}
 	d := json.NewDecoder(r)
 	d.UseNumber()
@@ -213,13 +208,14 @@ func makeStatementsFromJSON(r io.Reader) (statements, error) {
 	if err != nil {
 		return nil, err
 	}
-	return makeStatements(statement{{"json", typBare}}, top)
+	ss := make(statements, 0, 32)
+	err = ss.fill(statement{{"json", typBare}}, top)
+	return ss, err
 }
 
-// makeStatements takes a prefix and interface value and returns
-// a statements list or an error on failure
-func makeStatements(prefix statement, v interface{}) (statements, error) {
-	ss := make(statements, 0)
+// fill takes a prefix statement and some value and recursively fills
+// the statement list using that value
+func (ss *statements) fill(prefix statement, v interface{}) error {
 
 	// Add a statement for the current prefix and value
 	ss.Add(prefix, valueTokenFromInterface(v))
@@ -236,23 +232,21 @@ func makeStatements(prefix statement, v interface{}) (statements, error) {
 			} else {
 				newPrefix = prefix.withQuotedKey(k)
 			}
-			extra, err := makeStatements(newPrefix, sub)
+			err := ss.fill(newPrefix, sub)
 			if err != nil {
-				return ss, err
+				return err
 			}
-			ss.AddMulti(extra)
 		}
 
 	case []interface{}:
 		// It's an array
 		for k, sub := range vv {
-			extra, err := makeStatements(prefix.withNumericKey(k), sub)
+			err := ss.fill(prefix.withNumericKey(k), sub)
 			if err != nil {
-				return ss, err
+				return err
 			}
-			ss.AddMulti(extra)
 		}
 	}
 
-	return ss, nil
+	return nil
 }

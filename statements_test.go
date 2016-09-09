@@ -32,10 +32,10 @@ func TestStatementsSimple(t *testing.T) {
 		"id": 66912849
 	}`)
 
-	ss, err := makeStatementsFromJSON(bytes.NewReader(j))
+	ss, err := statementsFromJSON(bytes.NewReader(j))
 
 	if err != nil {
-		t.Errorf("Want nil error from makeStatements() but got %s", err)
+		t.Errorf("Want nil error from makeStatementsFromJSON() but got %s", err)
 	}
 
 	wants := statementsFromStringSlice([]string{
@@ -106,7 +106,7 @@ func BenchmarkStatementsLess(b *testing.B) {
 	}
 }
 
-func BenchmarkMakeStatements(b *testing.B) {
+func BenchmarkFill(b *testing.B) {
 	j := []byte(`{
 		"dotted": "A dotted value",
 		"a quoted": "value",
@@ -127,7 +127,8 @@ func BenchmarkMakeStatements(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_, _ = makeStatements(statement{{"json", typBare}}, top)
+		ss := make(statements, 0)
+		_ = ss.fill(statement{{"json", typBare}}, top)
 	}
 }
 
