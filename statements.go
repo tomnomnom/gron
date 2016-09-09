@@ -68,10 +68,13 @@ func (s statement) withNumericKey(k int) statement {
 // E.g statement: json.foo = "bar";
 type statements []statement
 
-// add takes a statement representing a path and a value token and appends
-// it to the list of statements as a complete assignment
+// add takes a statement representing a path, copies it,
+// adds a value token to the end of the statement and appends
+// the new statement to the list of statements
 func (ss *statements) add(s statement, new token) {
-	add := append(s, token{"=", typEquals}, new, token{";", typSemi})
+	add := make(statement, len(s), len(s)+3)
+	copy(add, s)
+	add = append(add, token{"=", typEquals}, new, token{";", typSemi})
 	*ss = append(*ss, add)
 }
 
