@@ -68,18 +68,18 @@ func (s statement) withNumericKey(k int) statement {
 // E.g statement: json.foo = "bar";
 type statements []statement
 
-// add takes a statement representing a path, copies it,
+// addWithValue takes a statement representing a path, copies it,
 // adds a value token to the end of the statement and appends
 // the new statement to the list of statements
-func (ss *statements) add(s statement, new token) {
-	add := make(statement, len(s), len(s)+3)
-	copy(add, s)
-	add = append(add, token{"=", typEquals}, new, token{";", typSemi})
-	*ss = append(*ss, add)
+func (ss *statements) addWithValue(path statement, value token) {
+	s := make(statement, len(path), len(path)+3)
+	copy(s, path)
+	s = append(s, token{"=", typEquals}, value, token{";", typSemi})
+	*ss = append(*ss, s)
 }
 
-// addFull appends a new complete statement to list of statements
-func (ss *statements) addFull(s statement) {
+// add appends a new complete statement to list of statements
+func (ss *statements) add(s statement) {
 	*ss = append(*ss, s)
 }
 
@@ -102,7 +102,7 @@ func statementFromString(str string) statement {
 }
 
 // ungron turns statements into a proper datastructure
-func (ss statements) ungron() (interface{}, error) {
+func (ss statements) toInterface() (interface{}, error) {
 
 	// Get all the individually parsed statements
 	var parsed []interface{}
@@ -229,7 +229,7 @@ func statementsFromJSON(r io.Reader) (statements, error) {
 func (ss *statements) fill(prefix statement, v interface{}) {
 
 	// Add a statement for the current prefix and value
-	ss.add(prefix, valueTokenFromInterface(v))
+	ss.addWithValue(prefix, valueTokenFromInterface(v))
 
 	// Recurse into objects and arrays
 	switch vv := v.(type) {
@@ -237,13 +237,11 @@ func (ss *statements) fill(prefix statement, v interface{}) {
 	case map[string]interface{}:
 		// It's an object
 		for k, sub := range vv {
-			var newPrefix statement
 			if validIdentifier(k) {
-				newPrefix = prefix.withBare(k)
+				ss.fill(prefix.withBare(k), sub)
 			} else {
-				newPrefix = prefix.withQuotedKey(k)
+				ss.fill(prefix.withQuotedKey(k), sub)
 			}
-			ss.fill(newPrefix, sub)
 		}
 
 	case []interface{}:

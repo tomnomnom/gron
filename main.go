@@ -102,24 +102,25 @@ func main() {
 		os.Exit(exitOK)
 	}
 
-	var raw io.Reader
-
+	// Determine what the program's input should be:
+	// file, HTTP URL or stdin
+	var rawInput io.Reader
 	filename := flag.Arg(0)
 	if filename == "" || filename == "-" {
-		raw = os.Stdin
+		rawInput = os.Stdin
 	} else {
 		if !validURL(filename) {
 			r, err := os.Open(filename)
 			if err != nil {
 				fatal(exitOpenFile, err)
 			}
-			raw = r
+			rawInput = r
 		} else {
 			r, err := getURL(filename)
 			if err != nil {
 				fatal(exitFetchURL, err)
 			}
-			raw = r
+			rawInput = r
 		}
 	}
 
@@ -133,11 +134,12 @@ func main() {
 		opts = opts | optNoSort
 	}
 
+	// Pick the appropriate action: gron or ungron
 	var a actionFn = gron
 	if ungronFlag {
 		a = ungron
 	}
-	exitCode, err := a(raw, os.Stdout, opts)
+	exitCode, err := a(rawInput, os.Stdout, opts)
 
 	if exitCode != exitOK {
 		fatal(exitCode, err)
@@ -146,8 +148,13 @@ func main() {
 	os.Exit(exitOK)
 }
 
+// an actionFn represents a main action of the program, it accepts
+// an input, output and a bitfield of options; returning an exit
+// code and any error that occurred
 type actionFn func(io.Reader, io.Writer, int) (int, error)
 
+// gron is the default action. Given JSON as the input it returns a list
+// of assignment statements. Possible options are optNoSort and optMonochrome
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 
 	ss, err := statementsFromJSON(r)
@@ -174,6 +181,8 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 	return exitOK, nil
 }
 
+// ungron is the reverse of gron. Given assignment statements as input,
+// it returns JSON. The only option is optMonochrome
 func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	scanner := bufio.NewScanner(r)
 
@@ -181,14 +190,14 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	var ss statements
 	for scanner.Scan() {
 		s := statementFromString(scanner.Text())
-		ss.addFull(s)
+		ss.add(s)
 	}
 	if err := scanner.Err(); err != nil {
 		return exitReadInput, fmt.Errorf("failed to read input statements")
 	}
 
-	// ungron the statements
-	merged, err := ss.ungron()
+	// turn the statements into a single merged interface{} type
+	merged, err := ss.toInterface()
 	if err != nil {
 		return exitParseStatements, err
 	}

@@ -154,7 +154,7 @@ func TestUngronStatementsSimple(t *testing.T) {
 		},
 	}
 
-	have, err := in.ungron()
+	have, err := in.toInterface()
 
 	if err != nil {
 		t.Fatalf("want nil error but have: %s", err)
@@ -177,7 +177,7 @@ func TestUngronStatementsInvalid(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := c.ungron()
+		_, err := c.toInterface()
 		if err == nil {
 			t.Errorf("want non-nil error; have nil")
 		}

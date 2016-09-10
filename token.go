@@ -47,8 +47,10 @@ const (
 	typError
 )
 
+// a sprintFn adds color to its input
 type sprintFn func(...interface{}) string
 
+// mapping of token types to the appropriate color sprintFn
 var sprintFns = map[tokenTyp]sprintFn{
 	typBare:        bareColor.SprintFunc(),
 	typNumericKey:  numColor.SprintFunc(),
@@ -64,7 +66,7 @@ var sprintFns = map[tokenTyp]sprintFn{
 	typEmptyObject: braceColor.SprintFunc(),
 }
 
-// isValue returns true if the token is a valid value
+// isValue returns true if the token is a valid value type
 func (t token) isValue() bool {
 	switch t.typ {
 	case typString, typNumber, typTrue, typFalse, typNull, typEmptyArray, typEmptyObject:
@@ -74,7 +76,7 @@ func (t token) isValue() bool {
 	}
 }
 
-// isPunct returns true is the token is punctuation
+// isPunct returns true is the token is a punctuation type
 func (t token) isPunct() bool {
 	switch t.typ {
 	case typDot, typLBrace, typRBrace, typEquals, typSemi:
@@ -131,6 +133,8 @@ func valueTokenFromInterface(v interface{}) token {
 	}
 }
 
+// quoteString takes a string and returns a quoted and
+// escaped string valid for use in gron output
 func quoteString(s string) string {
 	out, err := json.Marshal(s)
 	if err != nil {
