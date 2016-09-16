@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.7
+- HTML characters (`<`, `>` etc) are no-longer escaped in gron output (issue #22)
+
 ## 0.3.6
 - Fixes bug where invalid statements were outputted
 
