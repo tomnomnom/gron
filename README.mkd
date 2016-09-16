@@ -41,7 +41,7 @@ Put the binary in your `$PATH` (e.g. in `/usr/bin`) to make it easy to use:
 ▶ sudo mv gron /usr/bin/
 ```
 
-Or if you're a Go user you can use `go get`:
+Or if you're a Go user you can use `go get` (if you're using Go 1.7 or newer):
 
 ```
 ▶ go get -u github.com/tomnomnom/gron
