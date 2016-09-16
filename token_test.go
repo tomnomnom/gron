@@ -14,6 +14,7 @@ func TestValueTokenFromInterface(t *testing.T) {
 		{make([]interface{}, 0), token{"[]", typEmptyArray}},
 		{json.Number("1.2"), token{"1.2", typNumber}},
 		{"foo", token{`"foo"`, typString}},
+		{"<3", token{`"<3"`, typString}},
 		{true, token{"true", typTrue}},
 		{false, token{"false", typFalse}},
 		{nil, token{"null", typNull}},

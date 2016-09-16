@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -136,11 +137,16 @@ func valueTokenFromInterface(v interface{}) token {
 // quoteString takes a string and returns a quoted and
 // escaped string valid for use in gron output
 func quoteString(s string) string {
-	out, err := json.Marshal(s)
+	out := &bytes.Buffer{}
+	j := json.NewEncoder(out)
+	j.SetEscapeHTML(false)
+	err := j.Encode(s)
 	if err != nil {
 		// It shouldn't be possible to be given a string we can't marshal
 		// so just bomb out in spectacular style
 		panic(fmt.Sprintf("failed to marshal string: %s", s))
 	}
-	return string(out)
+	// *json.Encoder's Encode method appends a newline char that
+	// we don't want so slice it off the end
+	return out.String()[:out.Len()-1]
 }
