@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"unicode"
 )
 
 // A token is a chunk of text from a statement with a type
@@ -137,16 +138,65 @@ func valueTokenFromInterface(v interface{}) token {
 // quoteString takes a string and returns a quoted and
 // escaped string valid for use in gron output
 func quoteString(s string) string {
+
 	out := &bytes.Buffer{}
-	j := json.NewEncoder(out)
-	j.SetEscapeHTML(false)
-	err := j.Encode(s)
-	if err != nil {
-		// It shouldn't be possible to be given a string we can't marshal
-		// so just bomb out in spectacular style
-		panic(fmt.Sprintf("failed to marshal string: %s", s))
+	// bytes.Buffer never returns errors on these methods.
+	// errors are explicitly ignored to keep the linter
+	// happy. A price worth paying so that the linter
+	// remains useful.
+	_ = out.WriteByte('"')
+
+	for _, r := range s {
+
+		if r == '\\' || r == '"' {
+			_ = out.WriteByte('\\')
+			_, _ = out.WriteRune(r)
+			continue
+		}
+
+		// \u2028 and \u2029 are separator runes that are not valid
+		// in javascript strings so they must be escaped.
+		// See http://timelessrepo.com/json-isnt-a-javascript-subset
+		if r == '\u2028' {
+			_, _ = out.WriteString(`\u2028`)
+			continue
+		}
+		if r == '\u2029' {
+			_, _ = out.WriteString(`\u2029`)
+			continue
+		}
+
+		// Any other control runes must be escaped
+		if unicode.IsControl(r) {
+
+			switch r {
+			case '\b':
+				_ = out.WriteByte('\\')
+				_ = out.WriteByte('b')
+			case '\f':
+				_ = out.WriteByte('\\')
+				_ = out.WriteByte('f')
+			case '\n':
+				_ = out.WriteByte('\\')
+				_ = out.WriteByte('n')
+			case '\r':
+				_ = out.WriteByte('\\')
+				_ = out.WriteByte('r')
+			case '\t':
+				_ = out.WriteByte('\\')
+				_ = out.WriteByte('t')
+			default:
+				_, _ = out.WriteString(fmt.Sprintf(`\u%04X`, r))
+			}
+
+			continue
+		}
+
+		// Unescaped rune
+		_, _ = out.WriteRune(r)
 	}
-	// *json.Encoder's Encode method appends a newline char that
-	// we don't want so slice it off the end
-	return out.String()[:out.Len()-1]
+
+	_ = out.WriteByte('"')
+	return out.String()
+
 }
