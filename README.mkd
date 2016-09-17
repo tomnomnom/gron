@@ -41,6 +41,11 @@ Put the binary in your `$PATH` (e.g. in `/usr/bin`) to make it easy to use:
 ▶ sudo mv gron /usr/bin/
 ```
 
+If you're a Mac user you can also [install gron via brew](http://braumeister.org/formula/gron):
+```
+▶ brew install gron
+```
+
 Or if you're a Go user you can use `go get` (if you're using Go 1.7 or newer):
 
 ```
