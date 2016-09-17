@@ -11,7 +11,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// A statement is a complete assignment
+// A statement is a slice of tokens representing an assignment statement.
+// An assignment statement is something like:
+//
+//   json.city = "Leeds";
+//
+// Where 'json', '.', 'city', '=', '"Leeds"' and ';' are discrete tokens.
+// Statements are stored as tokens to make sorting more efficient, and so
+// that the same type can easily be used when gronning and ungronning.
 type statement []token
 
 // String returns the string form of a statement rather than the
@@ -36,8 +43,10 @@ func (s statement) colorString() string {
 // withBare returns a copy of a statement with a new bare
 // word token appended to it
 func (s statement) withBare(k string) statement {
+	new := make(statement, len(s), len(s)+2)
+	copy(new, s)
 	return append(
-		s,
+		new,
 		token{".", typDot},
 		token{k, typBare},
 	)
@@ -46,8 +55,10 @@ func (s statement) withBare(k string) statement {
 // withQuotedKey returns a copy of a statement with a new
 // quoted key token appended to it
 func (s statement) withQuotedKey(k string) statement {
+	new := make(statement, len(s), len(s)+3)
+	copy(new, s)
 	return append(
-		s,
+		new,
 		token{"[", typLBrace},
 		token{quoteString(k), typQuotedKey},
 		token{"]", typRBrace},
@@ -57,7 +68,10 @@ func (s statement) withQuotedKey(k string) statement {
 // withNumericKey returns a copy of a statement with a new
 // numeric key token appended to it
 func (s statement) withNumericKey(k int) statement {
-	return append(s,
+	new := make(statement, len(s), len(s)+3)
+	copy(new, s)
+	return append(
+		new,
 		token{"[", typLBrace},
 		token{strconv.Itoa(k), typNumericKey},
 		token{"]", typRBrace},
