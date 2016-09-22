@@ -120,15 +120,14 @@ func BenchmarkFill(b *testing.B) {
 		"else": 1
 	}`)
 
-	var top interface{}
-	err := json.Unmarshal(j, &top)
-	if err != nil {
-		b.Fatalf("Failed to unmarshal test file: %s", err)
-	}
-
 	for i := 0; i < b.N; i++ {
+		d := json.NewDecoder(bytes.NewBuffer(j))
+		d.UseNumber()
 		ss := make(statements, 0)
-		ss.fill(statement{{"json", typBare}}, top)
+		ss.fill(statement{{"json", typBare}}, d)
+		if len(ss) != 12 {
+			b.Fatalf("want 12 statements; have %d", len(ss))
+		}
 	}
 }
 

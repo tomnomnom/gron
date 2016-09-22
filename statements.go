@@ -226,43 +226,91 @@ func (ss statements) Contains(search statement) bool {
 // statementsFromJSON takes an io.Reader containing JSON
 // and returns statements or an error on failure
 func statementsFromJSON(r io.Reader) (statements, error) {
-	var top interface{}
+	//var top interface{}
 	d := json.NewDecoder(r)
 	d.UseNumber()
-	err := d.Decode(&top)
-	if err != nil {
-		return nil, err
-	}
+	//err := d.Decode(&top)
+	//if err != nil {
+	//return nil, err
+	//}
 	ss := make(statements, 0, 32)
-	ss.fill(statement{{"json", typBare}}, top)
+	ss.fill(statement{{"json", typBare}}, d)
 	return ss, nil
 }
 
 // fill takes a prefix statement and some value and recursively fills
 // the statement list using that value
-func (ss *statements) fill(prefix statement, v interface{}) {
+func (ss *statements) fill(prefix statement, dec *json.Decoder) {
 
-	// Add a statement for the current prefix and value
-	ss.addWithValue(prefix, valueTokenFromInterface(v))
+	t, err := dec.Token()
+	if err == io.EOF {
+		ss.addWithValue(prefix, token{"", typError})
+		return
+	}
+	if err != nil {
+		ss.addWithValue(prefix, token{"", typError})
+		return
+	}
 
-	// Recurse into objects and arrays
-	switch vv := v.(type) {
+	switch vv := t.(type) {
+	case json.Delim:
+		// It's a map or an array
+		if vv == json.Delim('{') {
+			ss.addWithValue(prefix, token{"{}", typEmptyObject})
+			for {
+				t, err := dec.Token()
+				if err != nil {
+					ss.addWithValue(prefix, token{"", typError})
+					return
+				}
 
-	case map[string]interface{}:
-		// It's an object
-		for k, sub := range vv {
-			if validIdentifier(k) {
-				ss.fill(prefix.withBare(k), sub)
-			} else {
-				ss.fill(prefix.withQuotedKey(k), sub)
+				key, ok := t.(string)
+				if !ok {
+					ss.addWithValue(prefix, token{"", typError})
+					return
+				}
+
+				if validIdentifier(key) {
+					ss.fill(prefix.withBare(key), dec)
+				} else {
+					ss.fill(prefix.withQuotedKey(key), dec)
+				}
+
+				if !dec.More() {
+					break
+				}
 			}
+
+		} else if vv == json.Delim('[') {
+			ss.addWithValue(prefix, token{"[]", typEmptyArray})
+			i := 0
+			for {
+				ss.fill(prefix.withNumericKey(i), dec)
+				i++
+				if !dec.More() {
+					break
+				}
+			}
+
 		}
 
-	case []interface{}:
-		// It's an array
-		for k, sub := range vv {
-			ss.fill(prefix.withNumericKey(k), sub)
+		// Consume the closing delimiter
+		_, _ = dec.Token()
+
+	case json.Number:
+		ss.addWithValue(prefix, token{vv.String(), typNumber})
+	case string:
+		ss.addWithValue(prefix, token{quoteString(vv), typString})
+	case bool:
+		if vv {
+			ss.addWithValue(prefix, token{"true", typTrue})
+		} else {
+			ss.addWithValue(prefix, token{"false", typFalse})
 		}
+	case nil:
+		ss.addWithValue(prefix, token{"null", typNull})
+	default:
+		ss.addWithValue(prefix, token{"", typError})
 	}
 
 }

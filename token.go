@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"unicode"
 )
@@ -108,31 +107,6 @@ func (t token) formatColor() string {
 	}
 	return text
 
-}
-
-// valueTokenFromInterface takes any valid value and
-// returns a value token to represent it
-func valueTokenFromInterface(v interface{}) token {
-	switch vv := v.(type) {
-
-	case map[string]interface{}:
-		return token{"{}", typEmptyObject}
-	case []interface{}:
-		return token{"[]", typEmptyArray}
-	case json.Number:
-		return token{vv.String(), typNumber}
-	case string:
-		return token{quoteString(vv), typString}
-	case bool:
-		if vv {
-			return token{"true", typTrue}
-		}
-		return token{"false", typFalse}
-	case nil:
-		return token{"null", typNull}
-	default:
-		return token{"", typError}
-	}
 }
 
 // quoteString takes a string and returns a quoted and
