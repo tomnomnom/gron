@@ -56,6 +56,7 @@ func init() {
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
+		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
 		h += "      --no-sort    Don't sort output (faster)\n"
 		h += "      --version    Print version information\n\n"
 
@@ -83,6 +84,7 @@ func main() {
 	var (
 		ungronFlag     bool
 		monochromeFlag bool
+		streamFlag     bool
 		noSortFlag     bool
 		versionFlag    bool
 	)
@@ -91,6 +93,8 @@ func main() {
 	flag.BoolVar(&ungronFlag, "u", false, "")
 	flag.BoolVar(&monochromeFlag, "monochrome", false, "")
 	flag.BoolVar(&monochromeFlag, "m", false, "")
+	flag.BoolVar(&streamFlag, "s", false, "")
+	flag.BoolVar(&streamFlag, "stream", false, "")
 	flag.BoolVar(&noSortFlag, "no-sort", false, "")
 	flag.BoolVar(&versionFlag, "version", false, "")
 
@@ -134,10 +138,12 @@ func main() {
 		opts = opts | optNoSort
 	}
 
-	// Pick the appropriate action: gron or ungron
+	// Pick the appropriate action: gron, ungron or gronStream
 	var a actionFn = gron
 	if ungronFlag {
 		a = ungron
+	} else if streamFlag {
+		a = gronStream
 	}
 	exitCode, err := a(rawInput, os.Stdout, opts)
 
@@ -157,7 +163,7 @@ type actionFn func(io.Reader, io.Writer, int) (int, error)
 // of assignment statements. Possible options are optNoSort and optMonochrome
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 
-	ss, err := statementsFromJSON(r)
+	ss, err := statementsFromJSON(r, statement{{"json", typBare}})
 	if err != nil {
 		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
 	}
@@ -179,6 +185,72 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 	}
 
 	return exitOK, nil
+}
+
+// gronStream is like the gron action, but it treats the input as one
+// JSON object per line. There's a bit of code duplication from the
+// gron action, but it'd be fairly messy to combine the two actions
+func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
+
+	// Helper function to make the prefix statements for each line
+	makePrefix := func(index int) statement {
+		return statement{
+			{"json", typBare},
+			{"[", typLBrace},
+			{fmt.Sprintf("%d", index), typNumericKey},
+			{"]", typRBrace},
+		}
+	}
+
+	// The first line of output needs to establish that the top-level
+	// thing is actually an array...
+	top := statement{
+		{"json", typBare},
+		{"=", typEquals},
+		{"[]", typEmptyArray},
+		{";", typSemi},
+	}
+	if opts&optMonochrome > 0 {
+		fmt.Fprintln(w, top.String())
+	} else {
+		fmt.Fprintln(w, top.colorString())
+	}
+
+	// Read the input line by line
+	sc := bufio.NewScanner(r)
+	i := 0
+	for sc.Scan() {
+
+		line := bytes.NewBuffer(sc.Bytes())
+
+		ss, err := statementsFromJSON(line, makePrefix(i))
+		i++
+		if err != nil {
+			return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
+		}
+
+		// Go's maps do not have well-defined ordering, but we want a consistent
+		// output for a given input, so we must sort the statements
+		if opts&optNoSort == 0 {
+			sort.Sort(ss)
+		}
+
+		if opts&optMonochrome > 0 {
+			for _, s := range ss {
+				fmt.Fprintln(w, s.String())
+			}
+		} else {
+			for _, s := range ss {
+				fmt.Fprintln(w, s.colorString())
+			}
+		}
+	}
+	if err := sc.Err(); err != nil {
+		return exitFormStatements, fmt.Errorf("error reading multiline input: %s", err)
+	}
+
+	return exitOK, nil
+
 }
 
 // ungron is the reverse of gron. Given assignment statements as input,

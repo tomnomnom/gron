@@ -32,7 +32,7 @@ func TestStatementsSimple(t *testing.T) {
 		"id": 66912849
 	}`)
 
-	ss, err := statementsFromJSON(bytes.NewReader(j))
+	ss, err := statementsFromJSON(bytes.NewReader(j), statement{{"json", typBare}})
 
 	if err != nil {
 		t.Errorf("Want nil error from makeStatementsFromJSON() but got %s", err)

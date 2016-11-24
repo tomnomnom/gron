@@ -225,7 +225,7 @@ func (ss statements) Contains(search statement) bool {
 
 // statementsFromJSON takes an io.Reader containing JSON
 // and returns statements or an error on failure
-func statementsFromJSON(r io.Reader) (statements, error) {
+func statementsFromJSON(r io.Reader, prefix statement) (statements, error) {
 	var top interface{}
 	d := json.NewDecoder(r)
 	d.UseNumber()
@@ -234,7 +234,7 @@ func statementsFromJSON(r io.Reader) (statements, error) {
 		return nil, err
 	}
 	ss := make(statements, 0, 32)
-	ss.fill(statement{{"json", typBare}}, top)
+	ss.fill(prefix, top)
 	return ss, nil
 }
 

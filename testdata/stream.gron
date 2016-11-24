@@ -1,0 +1,15 @@
+json = [];
+json[0] = {};
+json[0].one = 1;
+json[0].three = [];
+json[0].three[0] = 1;
+json[0].three[1] = 2;
+json[0].three[2] = 3;
+json[0].two = 2;
+json[1] = {};
+json[1].one = 1;
+json[1].three = [];
+json[1].three[0] = 1;
+json[1].three[1] = 2;
+json[1].three[2] = 3;
+json[1].two = 2;
