@@ -11,7 +11,6 @@ import (
 	"sort"
 
 	"github.com/fatih/color"
-	isatty "github.com/mattn/go-isatty"
 	"github.com/nwidger/jsoncolor"
 	"github.com/pkg/errors"
 )
@@ -55,6 +54,7 @@ func init() {
 
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
+		h += "  -c, --colorize   Colorize output (default on tty)\n"
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
 		h += "      --no-sort    Don't sort output (faster)\n"
@@ -83,6 +83,7 @@ func init() {
 func main() {
 	var (
 		ungronFlag     bool
+		colorizeFlag   bool
 		monochromeFlag bool
 		streamFlag     bool
 		noSortFlag     bool
@@ -91,6 +92,8 @@ func main() {
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
 	flag.BoolVar(&ungronFlag, "u", false, "")
+	flag.BoolVar(&colorizeFlag, "colorize", false, "")
+	flag.BoolVar(&colorizeFlag, "c", false, "")
 	flag.BoolVar(&monochromeFlag, "monochrome", false, "")
 	flag.BoolVar(&monochromeFlag, "m", false, "")
 	flag.BoolVar(&streamFlag, "s", false, "")
@@ -131,7 +134,10 @@ func main() {
 	var opts int
 	// The monochrome option should be forced if the output isn't a terminal
 	// to avoid doing unnecessary work calling the color functions
-	if monochromeFlag || !isatty.IsTerminal(os.Stdout.Fd()) {
+	switch {
+	case colorizeFlag:
+		color.NoColor = false
+	case monochromeFlag || color.NoColor:
 		opts = opts | optMonochrome
 	}
 	if noSortFlag {
