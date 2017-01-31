@@ -46,6 +46,27 @@ func TestLex(t *testing.T) {
 			{`;`, typSemi},
 		}},
 
+		{`json = "\\";`, []token{
+			{`json`, typBare},
+			{`=`, typEquals},
+			{`"\\"`, typString},
+			{`;`, typSemi},
+		}},
+
+		{`json = "\\\\";`, []token{
+			{`json`, typBare},
+			{`=`, typEquals},
+			{`"\\\\"`, typString},
+			{`;`, typSemi},
+		}},
+
+		{`json = "f\oo\\";`, []token{
+			{`json`, typBare},
+			{`=`, typEquals},
+			{`"f\oo\\"`, typString},
+			{`;`, typSemi},
+		}},
+
 		{`json.value = "\u003c ;";`, []token{
 			{`json`, typBare},
 			{`.`, typDot},
