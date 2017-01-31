@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+- Adds `-c`/`--colorize` to force colorization of output
+- Adds `-s`/`--stream` option to read one JSON object per line
+- Native string quoting (performance improvement)
+- Fixes bug with strings ending in a double-slash (issue #25)
+
 ## 0.3.7
 - HTML characters (`<`, `>` etc) are no-longer escaped in gron output (issue #22)
 
