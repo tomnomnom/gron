@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.0
+- Adds `-k`/`--insecure` to disable validation of certificates when fetching URLs (thanks @jagsta!)
+
 ## 0.4.0
 - Adds `-c`/`--colorize` to force colorization of output (thanks @orivej!)
 - Adds `-s`/`--stream` option to read one JSON object per line
