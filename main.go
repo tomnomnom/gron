@@ -127,7 +127,7 @@ func main() {
 			}
 			rawInput = r
 		} else {
-			r, err := getURL(filename,insecureFlag)
+			r, err := getURL(filename, insecureFlag)
 			if err != nil {
 				fatal(exitFetchURL, err)
 			}

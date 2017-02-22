@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
 	"time"
-	"crypto/tls"
 )
 
 func validURL(url string) bool {
@@ -17,11 +17,11 @@ func validURL(url string) bool {
 
 func getURL(url string, insecure bool) (io.Reader, error) {
 	tr := &http.Transport{
-        		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-    		}
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+	}
 	client := http.Client{
 		Transport: tr,
-		Timeout: 20 * time.Second,
+		Timeout:   20 * time.Second,
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
