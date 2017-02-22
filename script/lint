@@ -12,4 +12,6 @@ fi
 
 # dupl is disabled because it has a habbit of identifying tests as duplicated code.
 # in its defence: it's right. gocyclo is disabled because I'm a terrible programmer.
-gometalinter --disable=gocyclo --disable=dupl --enable=mispell --enable=goimports
+# gas is disabled because it doesn't like InsecureSkipVerify set to true for HTTP
+# requests - but we only do that if the user asks for it.
+gometalinter --disable=gocyclo --disable=dupl --enable=goimports --disable=gas
