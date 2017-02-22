@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"crypto/tls"
 )
 
 func validURL(url string) bool {
@@ -14,8 +15,12 @@ func validURL(url string) bool {
 	return r.MatchString(url)
 }
 
-func getURL(url string) (io.Reader, error) {
+func getURL(url string, insecure bool) (io.Reader, error) {
+	tr := &http.Transport{
+        		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+    		}
 	client := http.Client{
+		Transport: tr,
 		Timeout: 20 * time.Second,
 	}
 

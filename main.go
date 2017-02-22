@@ -57,6 +57,7 @@ func init() {
 		h += "  -c, --colorize   Colorize output (default on tty)\n"
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
+		h += "  -k, --insecure   Disable certificate validation\n"
 		h += "      --no-sort    Don't sort output (faster)\n"
 		h += "      --version    Print version information\n\n"
 
@@ -88,6 +89,7 @@ func main() {
 		streamFlag     bool
 		noSortFlag     bool
 		versionFlag    bool
+		insecureFlag   bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -100,6 +102,8 @@ func main() {
 	flag.BoolVar(&streamFlag, "stream", false, "")
 	flag.BoolVar(&noSortFlag, "no-sort", false, "")
 	flag.BoolVar(&versionFlag, "version", false, "")
+	flag.BoolVar(&insecureFlag, "k", false, "")
+	flag.BoolVar(&insecureFlag, "insecure", false, "")
 
 	flag.Parse()
 
@@ -123,7 +127,7 @@ func main() {
 			}
 			rawInput = r
 		} else {
-			r, err := getURL(filename)
+			r, err := getURL(filename,insecureFlag)
 			if err != nil {
 				fatal(exitFetchURL, err)
 			}
