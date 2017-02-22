@@ -187,18 +187,21 @@ Usage:
 
 Options:
   -u, --ungron     Reverse the operation (turn assignments back into JSON)
+  -c, --colorize   Colorize output (default on tty)
   -m, --monochrome Monochrome (don't colorize output)
+  -s, --stream     Treat each line of input as a separate JSON object
+  -k, --insecure   Disable certificate validation
       --no-sort    Don't sort output (faster)
       --version    Print version information
 
 Exit Codes:
-  0 OK
-  1 Failed to open file
-  2 Failed to read input
-  3 Failed to form statements
-  4 Failed to fetch URL
-  5 Failed to parse statements
-  6 Failed to encode JSON
+  0	OK
+  1	Failed to open file
+  2	Failed to read input
+  3	Failed to form statements
+  4	Failed to fetch URL
+  5	Failed to parse statements
+  6	Failed to encode JSON
 
 Examples:
   gron /tmp/apiresponse.json
