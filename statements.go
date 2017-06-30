@@ -155,7 +155,11 @@ func (ss statements) toInterface() (interface{}, error) {
 // Implements a natural sort to keep array indexes in order
 func (ss statements) Less(a, b int) bool {
 
-	diffStart := -1
+	// ss[a] and ss[b] are both slices of tokens. The first
+	// thing we need to do is find the first token (if any)
+	// that differs, then we can use that token to decide
+	// if ss[a] or ss[b] should come first in the sort.
+	diffIndex := -1
 	for i := range ss[a] {
 
 		if len(ss[b]) < i+1 {
@@ -170,19 +174,19 @@ func (ss statements) Less(a, b int) bool {
 		}
 
 		// We've found a difference
-		diffStart = i
+		diffIndex = i
 		break
 	}
 
-	// If diffStart is still -1 then the only difference must be
-	// that string B is longer than A, so A should come first
-	if diffStart == -1 {
+	// If diffIndex is still -1 then the only difference must be
+	// that ss[b] is longer than ss[a], so ss[a] should come first
+	if diffIndex == -1 {
 		return true
 	}
 
 	// Get the tokens that differ
-	ta := ss[a][diffStart]
-	tb := ss[b][diffStart]
+	ta := ss[a][diffIndex]
+	tb := ss[b][diffIndex]
 
 	// An equals always comes first
 	if ta.typ == typEquals {
