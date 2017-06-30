@@ -23,9 +23,15 @@ json[4].sha = "91b204972e63a1166c9d148fbbfd839f8697f91b";
 json[4].url = "https://api.github.com/repos/tomnomnom/gron/commits/91b204972e63a1166c9d148fbbfd839f8697f91b";
 ```
 
+To make the rest of this a little more readable, let's add an alias for that:
+
+```
+▶ alias ggh='gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5"'
+```
+
 Extract just the first commit using `fgrep "json[0]"`:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | fgrep "json[0]"
+▶ ggh | fgrep "json[0]"
 json[0] = {};
 json[0].author = {};
 json[0].author.avatar_url = "https://avatars.githubusercontent.com/u/58276?v=3";
@@ -41,14 +47,14 @@ json[0].url = "https://api.github.com/repos/tomnomnom/gron/commits/7da81e29c2724
 
 Get just the committer's name and the commit message using `egrep "(committer.name|commit.message)"`:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | fgrep "json[0]" | egrep "(committer.name|commit.message)"
+▶ ggh | fgrep "json[0]" | egrep "(committer.name|commit.message)"
 json[0].commit.committer.name = "Tom Hudson";
 json[0].commit.message = "Adds 0.1.7 to changelog";
 ```
 
 Turn the result back into JSON using `gron --ungron`:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | fgrep "json[0]" | egrep "(committer.name|commit.message)" | gron --ungron
+▶ ggh | fgrep "json[0]" | egrep "(committer.name|commit.message)" | gron --ungron
 [
   {
     "commit": {
@@ -63,10 +69,10 @@ Turn the result back into JSON using `gron --ungron`:
 
 gron preserves the location of values in the JSON, but you can use `sed` to remove keys from the path:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | fgrep "json[0]" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g"
+▶ ggh | fgrep "json[0]" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g"
 json[0].name = "Tom Hudson";
 json[0].message = "Adds 0.1.7 to changelog"
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | fgrep "json[0]" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g" | gron --ungron
+▶ ggh | fgrep "json[0]" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g" | gron --ungron
 [
   {
     "message": "Adds 0.1.7 to changelog",
@@ -77,7 +83,7 @@ json[0].message = "Adds 0.1.7 to changelog"
 
 Removing the `fgrep "json[0]"` from the pipeline means we do the same for all commits:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g" | gron --ungron
+▶ ggh | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g" | gron --ungron
 [
   {
     "message": "Adds 0.1.7 to changelog",
@@ -92,7 +98,7 @@ Removing the `fgrep "json[0]"` from the pipeline means we do the same for all co
 
 To include the `html_url` key for each commit's parents, all we need to do is add `parents.*html_url` into our call to `egrep`:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | egrep "(committer.name|commit.message|parents.*html_url)" | sed -r "s/(commit|committer)\.//g" 
+▶ ggh | egrep "(committer.name|commit.message|parents.*html_url)" | sed -r "s/(commit|committer)\.//g"
 json[0].name = "Tom Hudson";
 json[0].message = "Adds 0.1.7 to changelog";
 json[0].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
@@ -104,7 +110,7 @@ json[1].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/3eca8bf5
 
 To make the structure more like that in the final example in the `jq` tutorial, we can use `sed -r "s/\.html_url//"` to remove the `.html_url` part of the path:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | egrep "(committer.name|commit.message|parents.*html_url)" | sed -r "s/(commit|committer)\.//g" | sed -r "s/\.html_url//"
+▶ ggh | egrep "(committer.name|commit.message|parents.*html_url)" | sed -r "s/(commit|committer)\.//g" | sed -r "s/\.html_url//"
 json[0].name = "Tom Hudson";
 json[0].message = "Adds 0.1.7 to changelog";
 json[0].parents[0] = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
@@ -116,7 +122,7 @@ json[1].parents[0] = "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f07
 
 And, of course, the statements can be turned back into JSON with `gron --ungron`:
 ```
-▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=5" | egrep "(committer.name|commit.message|parents.*html_url)" | sed -r "s/(commit|committer)\.//g" | sed -r "s/\.html_url//" | gron --ungron
+▶ ggh | egrep "(committer.name|commit.message|parents.*html_url)" | sed -r "s/(commit|committer)\.//g" | sed -r "s/\.html_url//" | gron --ungron
 [
   {
     "message": "Adds 0.1.7 to changelog",
