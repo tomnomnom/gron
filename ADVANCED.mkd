@@ -72,6 +72,13 @@ gron preserves the location of values in the JSON, but you can use `sed` to remo
 ▶ ggh | fgrep "json[0]" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g"
 json[0].name = "Tom Hudson";
 json[0].message = "Adds 0.1.7 to changelog"
+
+```
+
+With those keys removed, the result is a 'flattened' object, which looks much cleaner when turned
+back into JSON with `gron --ungron`:
+
+```
 ▶ ggh | fgrep "json[0]" | egrep "(committer.name|commit.message)" | sed -r "s/(commit|committer)\.//g" | gron --ungron
 [
   {
