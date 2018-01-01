@@ -29,7 +29,8 @@ func TestStatementsSimple(t *testing.T) {
 			"foo": "bar"
 		},
 		"else": 1,
-		"id": 66912849
+		"id": 66912849,
+		"": 2
 	}`)
 
 	ss, err := statementsFromJSON(bytes.NewReader(j), statement{{"json", typBare}})
@@ -52,6 +53,7 @@ func TestStatementsSimple(t *testing.T) {
 		`json.anob.foo = "bar";`,
 		`json["else"] = 1;`,
 		`json.id = 66912849;`,
+		`json[""] = 2;`,
 	})
 
 	t.Logf("Have: %#v", ss)

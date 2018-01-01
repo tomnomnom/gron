@@ -21,6 +21,9 @@ func TestValidIdentifier(t *testing.T) {
 		{"true", false},
 		{"else", false},
 		{"null", false},
+
+		// Empty string
+		{"", false},
 	}
 
 	for _, test := range tests {

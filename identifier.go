@@ -49,7 +49,7 @@ var reservedWords = map[string]bool{
 //     a key with spaces      -> false
 //     1startsWithANumber	  -> false
 func validIdentifier(s string) bool {
-	if reservedWords[s] {
+	if reservedWords[s] || s == "" {
 		return false
 	}
 
