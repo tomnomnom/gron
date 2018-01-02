@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.1
+- Fixes bug where empty identifiers would be treated as bare words (thanks for the report, @waltertross!)
+
 ## 0.5.0
 - Adds `-k`/`--insecure` to disable validation of certificates when fetching URLs (thanks @jagsta!)
 
