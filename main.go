@@ -119,20 +119,18 @@ func main() {
 	filename := flag.Arg(0)
 	if filename == "" || filename == "-" {
 		rawInput = os.Stdin
-	} else {
-		if !validURL(filename) {
-			r, err := os.Open(filename)
-			if err != nil {
-				fatal(exitOpenFile, err)
-			}
-			rawInput = r
-		} else {
-			r, err := getURL(filename, insecureFlag)
-			if err != nil {
-				fatal(exitFetchURL, err)
-			}
-			rawInput = r
+	} else if validURL(filename) {
+		r, err := getURL(filename, insecureFlag)
+		if err != nil {
+			fatal(exitFetchURL, err)
 		}
+		rawInput = r
+	} else {
+		r, err := os.Open(filename)
+		if err != nil {
+			fatal(exitOpenFile, err)
+		}
+		rawInput = r
 	}
 
 	var opts int
