@@ -35,10 +35,10 @@ gron can work backwards too, enabling you to turn your filtered data back into J
 ## Installation
 
 gron has no runtime dependencies. You can just [download a binary for Linux, Mac, Windows or FreeBSD and run it](https://github.com/tomnomnom/gron/releases).
-Put the binary in your `$PATH` (e.g. in `/usr/bin`) to make it easy to use:
+Put the binary in your `$PATH` (e.g. in `/usr/local/bin`) to make it easy to use:
 ```
 ▶ tar xzf gron-linux-amd64-0.1.5.tgz
-▶ sudo mv gron /usr/bin/
+▶ sudo mv gron /usr/local/bin/
 ```
 
 If you're a Mac user you can also [install gron via brew](http://braumeister.org/formula/gron):
