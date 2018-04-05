@@ -3,8 +3,8 @@
 
 Make JSON greppable!
 
-gron transforms JSON into discrete assignments to make it easier to `grep` for what you want and see the absolute 'path' to it.
-It eases the exploration of APIs that return large blobs of JSON but have terrible documentation.
+gron transforms JSON into discrete assignments to make it easier to `grep` and see the absolute 'path'.
+Although gron eases the exploration of APIs that return large blobs of JSON, the documentation for gron is terrible.
 
 <pre>
 ▶ <b>gron</b> "https://api.github.com/repos/tomnomnom/gron/commits?per_page=1" | fgrep "commit.author"
@@ -14,7 +14,7 @@ json[0].commit.author.email = "mail@tomnomnom.com";
 json[0].commit.author.name = "Tom Hudson";
 </pre>
 
-gron can work backwards too, enabling you to turn your filtered data back into JSON:
+gron can work backwards too and enables filtered data to turn back into JSON:
 <pre>
 ▶ gron "https://api.github.com/repos/tomnomnom/gron/commits?per_page=1" | fgrep "commit.author" | <b>gron --ungron</b>
 [
@@ -34,25 +34,25 @@ gron can work backwards too, enabling you to turn your filtered data back into J
 
 ## Installation
 
-gron has no runtime dependencies. You can just [download a binary for Linux, Mac, Windows or FreeBSD and run it](https://github.com/tomnomnom/gron/releases).
-Put the binary in your `$PATH` (e.g. in `/usr/local/bin`) to make it easy to use:
+gron has no runtime dependencies. You can [download a binary for Linux, Mac, Windows or FreeBSD and run it](https://github.com/tomnomnom/gron/releases).
+Put the binary in your `$PATH` (e.g. in `/usr/local/bin`) so it is easy to use:
 ```
 ▶ tar xzf gron-linux-amd64-0.1.5.tgz
 ▶ sudo mv gron /usr/local/bin/
 ```
 
-If you're a Mac user you can also [install gron via brew](http://braumeister.org/formula/gron):
+If you're a Mac user, [install gron via brew](http://braumeister.org/formula/gron):
 ```
 ▶ brew install gron
 ```
 
-Or if you're a Go user you can use `go get` (if you're using Go 1.7 or newer):
+Or if you're a Go user, use `go get` (if you're using Go 1.7 or newer):
 
 ```
 ▶ go get -u github.com/tomnomnom/gron
 ```
 
-It's recommended that you alias `ungron` or `norg` (or both!) to `gron --ungron`. Put something like this in your shell profile (e.g. in `~/.bashrc`):
+alias `ungron` or `norg` (or both!) to `gron --ungron`is recommended. Put something like (e.g. in `~/.bashrc`) in the shell profile:
 ```
 alias norg="gron --ungron"
 alias ungron="gron --ungron"
@@ -97,7 +97,7 @@ json["User-Agent"] = "curl/7.43.0";
 json["X-Cloud-Trace-Context"] = "c70f7bf26661c67d0b9f2cde6f295319/13941186890243645147";
 ```
 
-Grep for something and easily see the path to it:
+Grep for something and see the path to it easily:
 
 ```
 ▶ gron testdata/two.json | grep twitter
@@ -173,7 +173,7 @@ json.likes[2] = "meat";
 }
 ```
 
-If you get creative you can do [some pretty neat tricks with gron](ADVANCED.mkd), and
+If you get creative, you can do [some pretty neat tricks with gron](ADVANCED.mkd), and
 then ungron the output back into JSON.
 
 ## Get Help
