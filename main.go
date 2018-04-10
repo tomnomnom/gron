@@ -183,14 +183,15 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 		sort.Sort(ss)
 	}
 
+	var conv statementconv
 	if opts&optMonochrome > 0 {
-		for _, s := range ss {
-			fmt.Fprintln(w, s.String())
-		}
+		conv = statementToString
 	} else {
-		for _, s := range ss {
-			fmt.Fprintln(w, s.colorString())
-		}
+		conv = statementToColorString
+	}
+
+	for _, s := range ss {
+		fmt.Fprintln(w, conv(s))
 	}
 
 	return exitOK, nil
@@ -219,11 +220,15 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 		{"[]", typEmptyArray},
 		{";", typSemi},
 	}
+
+	var conv func(s statement) string
 	if opts&optMonochrome > 0 {
-		fmt.Fprintln(w, top.String())
+		conv = statementToString
 	} else {
-		fmt.Fprintln(w, top.colorString())
+		conv = statementToColorString
 	}
+
+	fmt.Fprintln(w, conv(top))
 
 	// Read the input line by line
 	sc := bufio.NewScanner(r)
@@ -246,14 +251,8 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 			sort.Sort(ss)
 		}
 
-		if opts&optMonochrome > 0 {
-			for _, s := range ss {
-				fmt.Fprintln(w, s.String())
-			}
-		} else {
-			for _, s := range ss {
-				fmt.Fprintln(w, s.colorString())
-			}
+		for _, s := range ss {
+			fmt.Fprintln(w, conv(s))
 		}
 	}
 	if err := sc.Err(); err != nil {

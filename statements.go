@@ -40,6 +40,19 @@ func (s statement) colorString() string {
 	return strings.Join(out, "")
 }
 
+// a statementconv converts a statement to string
+type statementconv func(s statement) string
+
+// statementconv variant of statement.String
+func statementToString(s statement) string {
+	return s.String()
+}
+
+// statementconv variant of statement.colorString
+func statementToColorString(s statement) string {
+	return s.colorString()
+}
+
 // withBare returns a copy of a statement with a new bare
 // word token appended to it
 func (s statement) withBare(k string) statement {
