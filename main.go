@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/fatih/color"
+	"github.com/mattn/go-colorable"
 	"github.com/nwidger/jsoncolor"
 	"github.com/pkg/errors"
 )
@@ -153,7 +154,7 @@ func main() {
 	} else if streamFlag {
 		a = gronStream
 	}
-	exitCode, err := a(rawInput, os.Stdout, opts)
+	exitCode, err := a(rawInput, colorable.NewColorableStdout(), opts)
 
 	if exitCode != exitOK {
 		fatal(exitCode, err)
