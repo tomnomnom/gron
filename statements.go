@@ -65,6 +65,43 @@ func (s statement) withBare(k string) statement {
 	)
 }
 
+// jsonify converts an assignment statement to a JSON representation
+func (s statement) jsonify() (statement, error) {
+	// If m is the number of keys occurring in the left hand side
+	// of s, then len(s) is in between 2*m+4 and 3*m+4. The resultant
+	// statement j (carrying the JSON representation) is always 2*m+5
+	// long. So len(s)+1 ≥ 2*m+5 = len(j). Therefore an initaial
+	// allocation of j with capacity len(s)+1 will allow us to carry
+	// through without reallocation.
+	j := make(statement, 0, len(s)+1)
+	if len(s) < 4 || s[0].typ != typBare || s[len(s)-3].typ != typEquals ||
+		s[len(s)-1].typ != typSemi {
+		return nil, errors.New("non-assignment statement")
+	}
+
+	j = append(j, token{"[", typLBrace})
+	j = append(j, token{"[", typLBrace})
+	for _, t := range s[1 : len(s)-3] {
+		switch t.typ {
+		case typNumericKey, typQuotedKey:
+			j = append(j, t)
+			j = append(j, token{",", typComma})
+		case typBare:
+			j = append(j, token{quoteString(t.text), typQuotedKey})
+			j = append(j, token{",", typComma})
+		}
+	}
+	if j[len(j)-1].typ == typComma {
+		j = j[:len(j)-1]
+	}
+	j = append(j, token{"]", typLBrace})
+	j = append(j, token{",", typComma})
+	j = append(j, s[len(s)-2])
+	j = append(j, token{"]", typLBrace})
+
+	return j, nil
+}
+
 // withQuotedKey returns a copy of a statement with a new
 // quoted key token appended to it
 func (s statement) withQuotedKey(k string) statement {
@@ -120,12 +157,118 @@ func (ss statements) Swap(i, j int) {
 	ss[i], ss[j] = ss[j], ss[i]
 }
 
+// a statementmaker is a function that makes a statement
+// from string
+type statementmaker func(str string) (statement, error)
+
 // statementFromString takes statement string, lexes it and returns
 // the corresponding statement
 func statementFromString(str string) statement {
 	l := newLexer(str)
 	s := l.lex()
 	return s
+}
+
+// statementmaker variant of statementFromString
+func statementFromStringMaker(str string) (statement, error) {
+	return statementFromString(str), nil
+}
+
+// statementFromJson returns statement encoded by
+// JSON specification
+func statementFromJSONSpec(str string) (statement, error) {
+	var a []interface{}
+	var ok bool
+	var v interface{}
+	var s statement
+	var t tokenTyp
+	var nstr string
+	var nbuf []byte
+
+	err := json.Unmarshal([]byte(str), &a)
+	if err != nil {
+		return nil, err
+	}
+	if len(a) != 2 {
+		goto out
+	}
+
+	v = a[1]
+	a, ok = a[0].([]interface{})
+	if !ok {
+		goto out
+	}
+
+	// We'll append one initial token, then 3 tokens for each element of a,
+	// then 3 closing tokens, that's alltogether 3*len(a)+4.
+	s = make(statement, 0, 3*len(a)+4)
+	s = append(s, token{"json", typBare})
+	for _, e := range a {
+		s = append(s, token{"[", typLBrace})
+		switch e := e.(type) {
+		case string:
+			s = append(s, token{quoteString(e), typQuotedKey})
+		case float64:
+			nbuf, err = json.Marshal(e)
+			if err != nil {
+				return nil, errors.Wrap(err, "JSON internal error")
+			}
+			nstr = fmt.Sprintf("%s", nbuf)
+			s = append(s, token{nstr, typNumericKey})
+		default:
+			ok = false
+			goto out
+		}
+		s = append(s, token{"]", typRBrace})
+	}
+
+	s = append(s, token{"=", typEquals})
+
+	switch v := v.(type) {
+	case bool:
+		if v {
+			t = typTrue
+		} else {
+			t = typFalse
+		}
+	case float64:
+		t = typNumber
+	case string:
+		t = typString
+	case []interface{}:
+		ok = (len(v) == 0)
+		if !ok {
+			goto out
+		}
+		t = typEmptyArray
+	case map[string]interface{}:
+		ok = (len(v) == 0)
+		if !ok {
+			goto out
+		}
+		t = typEmptyObject
+	default:
+		ok = (v == nil)
+		if !ok {
+			goto out
+		}
+		t = typNull
+	}
+
+	nbuf, err = json.Marshal(v)
+	if err != nil {
+		return nil, errors.Wrap(err, "JSON internal error")
+	}
+	nstr = fmt.Sprintf("%s", nbuf)
+	s = append(s, token{nstr, t})
+
+	s = append(s, token{";", typSemi})
+
+out:
+	if !ok {
+		return nil, errors.New("invalid JSON layout")
+	}
+	return s, nil
 }
 
 // ungron turns statements into a proper datastructure

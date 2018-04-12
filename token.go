@@ -32,6 +32,7 @@ const (
 	typRBrace // ]
 	typEquals // =
 	typSemi   // ;
+	typComma  // ,
 
 	// Value types
 	typString      // "foo"
@@ -78,10 +79,10 @@ func (t token) isValue() bool {
 	}
 }
 
-// isPunct returns true is the token is a punctuation type
+// isPunct returns true if the token is a punctuation type
 func (t token) isPunct() bool {
 	switch t.typ {
-	case typDot, typLBrace, typRBrace, typEquals, typSemi:
+	case typDot, typLBrace, typRBrace, typEquals, typSemi, typComma:
 		return true
 	default:
 		return false
