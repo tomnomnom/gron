@@ -293,10 +293,15 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	}
 
 	// Marshal the output into JSON to display to the user
-	j, err := json.MarshalIndent(merged, "", "  ")
+	out := &bytes.Buffer{}
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	err = enc.Encode(merged)
 	if err != nil {
 		return exitJSONEncode, errors.Wrap(err, "failed to convert statements to JSON")
 	}
+	j := out.Bytes()
 
 	// If the output isn't monochrome, add color to the JSON
 	if opts&optMonochrome == 0 {
