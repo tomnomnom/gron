@@ -57,6 +57,10 @@ It's recommended that you alias `ungron` or `norg` (or both!) to `gron --ungron`
 alias norg="gron --ungron"
 alias ungron="gron --ungron"
 ```
+Or you could create a shell script in your $PATH named `ungron` or `norg` to affect all users:
+```
+gron --ungron "$@"
+```
 
 ## Usage
 
