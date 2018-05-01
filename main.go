@@ -227,6 +227,8 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 
 	// Read the input line by line
 	sc := bufio.NewScanner(r)
+	buf := make([]byte, 0, 64*1024)
+	sc.Buffer(buf, 1024*1024)
 	i := 0
 	for sc.Scan() {
 
