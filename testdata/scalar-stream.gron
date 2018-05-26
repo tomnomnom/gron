@@ -1,0 +1,7 @@
+json = [];
+json[0] = true;
+json[1] = false;
+json[2] = null;
+json[3] = "hello";
+json[4] = 4;
+json[5] = 4.4;

@@ -130,6 +130,18 @@ The output of `gron` is valid JavaScript:
   name: 'Tom' }
 ```
 
+It's also possible to obtain the `gron` output as JSON stream via
+the `--json` switch:
+
+```
+▶ curl -s http://headers.jsontest.com/ | gron --json
+[[],{}]
+[["Accept"],"*/*"]
+[["Host"],"headers.jsontest.com"]
+[["User-Agent"],"curl/7.43.0"]
+[["X-Cloud-Trace-Context"],"c70f7bf26661c67d0b9f2cde6f295319/13941186890243645147"]
+```
+
 ## ungronning
 gron can also turn its output back into JSON:
 ```
@@ -152,6 +164,20 @@ gron can also turn its output back into JSON:
 This means you use can use gron with `grep` and other tools to modify JSON:
 ```
 ▶ gron testdata/two.json | grep likes | gron --ungron
+{
+  "likes": [
+    "code",
+    "cheese",
+    "meat"
+  ]
+}
+```
+
+or
+
+
+```
+▶ gron --json testdata/two.json | grep likes | gron  --json --ungron
 {
   "likes": [
     "code",
@@ -195,6 +221,7 @@ Options:
   -m, --monochrome Monochrome (don't colorize output)
   -s, --stream     Treat each line of input as a separate JSON object
   -k, --insecure   Disable certificate validation
+  -j, --json       Represent gron data as JSON stream
       --no-sort    Don't sort output (faster)
       --version    Print version information
 
