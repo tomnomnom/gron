@@ -370,6 +370,13 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 		}
 	}
 
+	// For whatever reason, the monochrome version of the JSON
+	// has a trailing newline character, but the colorized version
+	// does not. Strip the whitespace so that neither has the newline
+	// character on the end, and then we'll add a newline in the
+	// Fprintf below
+	j = bytes.TrimSpace(j)
+
 	fmt.Fprintf(w, "%s\n", j)
 
 	return exitOK, nil
