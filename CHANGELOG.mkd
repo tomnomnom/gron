@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.3
+- Adds `--json`/JSON stream output support (thanks @csabahenk!)
+- Removes trailing newline character for monochrome output (issue #43)
+
+## 0.5.2
+- Built with Go 1.10 to fix issue #32 - Thanks @VladimirAlexiev and @joekyo!
+
 ## 0.5.1
 - Fixes bug where empty identifiers would be treated as bare words (thanks for the report, @waltertross!)
 
