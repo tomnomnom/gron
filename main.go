@@ -312,6 +312,9 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	scanner := bufio.NewScanner(r)
 	var maker statementmaker
 
+	// Allow larger internal buffer of the scanner (min: 64KiB ~ max: 1MiB)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+
 	if opts&optJSON > 0 {
 		maker = statementFromJSONSpec
 	} else {
