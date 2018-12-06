@@ -148,53 +148,37 @@ func quoteString(s string) string {
 	_ = out.WriteByte('"')
 
 	for _, r := range s {
-
-		if r == '\\' || r == '"' {
-			_ = out.WriteByte('\\')
-			_, _ = out.WriteRune(r)
-			continue
-		}
-
+		switch r {
+		case '\\':
+			_, _ = out.WriteString(`\\`)
+		case '"':
+			_, _ = out.WriteString(`\"`)
+		case '\b':
+			_, _ = out.WriteString(`\b`)
+		case '\f':
+			_, _ = out.WriteString(`\f`)
+		case '\n':
+			_, _ = out.WriteString(`\n`)
+		case '\r':
+			_, _ = out.WriteString(`\r`)
+		case '\t':
+			_, _ = out.WriteString(`\t`)
 		// \u2028 and \u2029 are separator runes that are not valid
 		// in javascript strings so they must be escaped.
 		// See http://timelessrepo.com/json-isnt-a-javascript-subset
-		if r == '\u2028' {
+		case '\u2028':
 			_, _ = out.WriteString(`\u2028`)
-			continue
-		}
-		if r == '\u2029' {
+		case '\u2029':
 			_, _ = out.WriteString(`\u2029`)
-			continue
-		}
-
-		// Any other control runes must be escaped
-		if unicode.IsControl(r) {
-
-			switch r {
-			case '\b':
-				_ = out.WriteByte('\\')
-				_ = out.WriteByte('b')
-			case '\f':
-				_ = out.WriteByte('\\')
-				_ = out.WriteByte('f')
-			case '\n':
-				_ = out.WriteByte('\\')
-				_ = out.WriteByte('n')
-			case '\r':
-				_ = out.WriteByte('\\')
-				_ = out.WriteByte('r')
-			case '\t':
-				_ = out.WriteByte('\\')
-				_ = out.WriteByte('t')
-			default:
-				_, _ = out.WriteString(fmt.Sprintf(`\u%04X`, r))
+		default:
+			// Any other control runes must be escaped
+			if unicode.IsControl(r) {
+				_, _ = fmt.Fprintf(out, `\u%04X`, r)
+			} else {
+				// Unescaped rune
+				_, _ = out.WriteRune(r)
 			}
-
-			continue
 		}
-
-		// Unescaped rune
-		_, _ = out.WriteRune(r)
 	}
 
 	_ = out.WriteByte('"')
