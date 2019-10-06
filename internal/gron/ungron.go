@@ -10,18 +10,121 @@
 //   String ::= '"' (UnescapedRune | ("\" (["\/bfnrt] | ('u' Hex))))* '"'
 //   UnescapedRune ::= [^#x0-#x1f"\]
 
-package main
+package gron
 
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
+	"bufio"
+	"bytes"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
+	"github.com/nwidger/jsoncolor"
 )
+
+// Ungron is the reverse of gron. Given assignment statements as input,
+// it returns JSON. The only option is optMonochrome
+func Ungron(r io.Reader, w io.Writer, opts int) (int, error) {
+	scanner := bufio.NewScanner(r)
+	var maker statementmaker
+
+	// Allow larger internal buffer of the scanner (min: 64KiB ~ max: 1MiB)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+
+	if opts&optJSON > 0 {
+		maker = statementFromJSONSpec
+	} else {
+		maker = statementFromStringMaker
+	}
+
+	// Make a list of statements from the input
+	var ss statements
+	for scanner.Scan() {
+		s, err := maker(scanner.Text())
+		if err != nil {
+			return exitParseStatements, err
+		}
+		ss.add(s)
+	}
+	if err := scanner.Err(); err != nil {
+		return exitReadInput, fmt.Errorf("failed to read input statements")
+	}
+
+	// turn the statements into a single merged interface{} type
+	merged, err := ss.toInterface()
+	if err != nil {
+		return exitParseStatements, err
+	}
+
+	// If there's only one top level key and it's "json", make that the top level thing
+	mergedMap, ok := merged.(map[string]interface{})
+	if ok {
+		if len(mergedMap) == 1 {
+			if _, exists := mergedMap["json"]; exists {
+				merged = mergedMap["json"]
+			}
+		}
+	}
+
+	// Marshal the output into JSON to display to the user
+	out := &bytes.Buffer{}
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	err = enc.Encode(merged)
+	if err != nil {
+		return exitJSONEncode, errors.Wrap(err, "failed to convert statements to JSON")
+	}
+	j := out.Bytes()
+
+	// If the output isn't monochrome, add color to the JSON
+	if opts&optMonochrome == 0 {
+		c, err := colorizeJSON(j)
+
+		// If we failed to colorize the JSON for whatever reason,
+		// we'll just fall back to monochrome output, otherwise
+		// replace the monochrome JSON with glorious technicolor
+		if err == nil {
+			j = c
+		}
+	}
+
+	// For whatever reason, the monochrome version of the JSON
+	// has a trailing newline character, but the colorized version
+	// does not. Strip the whitespace so that neither has the newline
+	// character on the end, and then we'll add a newline in the
+	// Fprintf below
+	j = bytes.TrimSpace(j)
+
+	fmt.Fprintf(w, "%s\n", j)
+
+	return exitOK, nil
+}
+
+func colorizeJSON(src []byte) ([]byte, error) {
+	out := &bytes.Buffer{}
+	f := jsoncolor.NewFormatter()
+
+	f.StringColor = strColor
+	f.ObjectColor = braceColor
+	f.ArrayColor = braceColor
+	f.FieldColor = bareColor
+	f.NumberColor = numColor
+	f.TrueColor = boolColor
+	f.FalseColor = boolColor
+	f.NullColor = boolColor
+
+	err := f.Format(out, src)
+	if err != nil {
+		return out.Bytes(), err
+	}
+	return out.Bytes(), nil
+}
 
 // errRecoverable is an error type to represent errors that
 // can be recovered from; e.g. an empty line in the input

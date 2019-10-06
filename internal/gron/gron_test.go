@@ -1,4 +1,4 @@
-package main
+package gron
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ func TestGron(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := gron(in, out, optMonochrome)
+		code, err := Gron(in, out, optMonochrome)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -71,7 +71,7 @@ func TestGronStream(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := gronStream(in, out, optMonochrome)
+		code, err := GronStream(in, out, optMonochrome)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -109,7 +109,7 @@ func TestLargeGronStream(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := gronStream(in, out, optMonochrome)
+		code, err := GronStream(in, out, optMonochrome)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -158,7 +158,7 @@ func TestUngron(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := ungron(in, out, optMonochrome)
+		code, err := Ungron(in, out, optMonochrome)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -205,7 +205,7 @@ func TestGronJ(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := gron(in, out, optMonochrome|optJSON)
+		code, err := Gron(in, out, optMonochrome|optJSON)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -244,7 +244,7 @@ func TestGronStreamJ(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := gronStream(in, out, optMonochrome|optJSON)
+		code, err := GronStream(in, out, optMonochrome|optJSON)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -291,7 +291,7 @@ func TestUngronJ(t *testing.T) {
 		}
 
 		out := &bytes.Buffer{}
-		code, err := ungron(in, out, optMonochrome|optJSON)
+		code, err := Ungron(in, out, optMonochrome|optJSON)
 
 		if code != exitOK {
 			t.Errorf("want exitOK; have %d", code)
@@ -328,7 +328,7 @@ func BenchmarkBigJSON(b *testing.B) {
 			b.Fatalf("failed to rewind input: %s", err)
 		}
 
-		_, err := gron(in, out, optMonochrome|optNoSort)
+		_, err := Gron(in, out, optMonochrome|optNoSort)
 		if err != nil {
 			b.Fatalf("failed to gron: %s", err)
 		}
