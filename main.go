@@ -1,19 +1,15 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
-	"sort"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-colorable"
-	"github.com/nwidger/jsoncolor"
-	"github.com/pkg/errors"
+
+	"github.com/tomnomnom/gron/internal/gron"
 )
 
 // Exit codes
@@ -156,11 +152,11 @@ func main() {
 	}
 
 	// Pick the appropriate action: gron, ungron or gronStream
-	var a actionFn = gron
+	var a actionFn = gron.Gron
 	if ungronFlag {
-		a = ungron
+		a = gron.Ungron
 	} else if streamFlag {
-		a = gronStream
+		a = gron.GronStream
 	}
 	exitCode, err := a(rawInput, colorable.NewColorableStdout(), opts)
 
@@ -175,235 +171,6 @@ func main() {
 // an input, output and a bitfield of options; returning an exit
 // code and any error that occurred
 type actionFn func(io.Reader, io.Writer, int) (int, error)
-
-// gron is the default action. Given JSON as the input it returns a list
-// of assignment statements. Possible options are optNoSort and optMonochrome
-func gron(r io.Reader, w io.Writer, opts int) (int, error) {
-	var err error
-
-	var conv statementconv
-	if opts&optMonochrome > 0 {
-		conv = statementToString
-	} else {
-		conv = statementToColorString
-	}
-
-	ss, err := statementsFromJSON(r, statement{{"json", typBare}})
-	if err != nil {
-		goto out
-	}
-
-	// Go's maps do not have well-defined ordering, but we want a consistent
-	// output for a given input, so we must sort the statements
-	if opts&optNoSort == 0 {
-		sort.Sort(ss)
-	}
-
-	for _, s := range ss {
-		if opts&optJSON > 0 {
-			s, err = s.jsonify()
-			if err != nil {
-				goto out
-			}
-		}
-		fmt.Fprintln(w, conv(s))
-	}
-
-out:
-	if err != nil {
-		return exitFormStatements, fmt.Errorf("failed to form statements: %s", err)
-	}
-	return exitOK, nil
-}
-
-// gronStream is like the gron action, but it treats the input as one
-// JSON object per line. There's a bit of code duplication from the
-// gron action, but it'd be fairly messy to combine the two actions
-func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
-	var err error
-	errstr := "failed to form statements"
-	var i int
-	var sc *bufio.Scanner
-	var buf []byte
-
-	var conv func(s statement) string
-	if opts&optMonochrome > 0 {
-		conv = statementToString
-	} else {
-		conv = statementToColorString
-	}
-
-	// Helper function to make the prefix statements for each line
-	makePrefix := func(index int) statement {
-		return statement{
-			{"json", typBare},
-			{"[", typLBrace},
-			{fmt.Sprintf("%d", index), typNumericKey},
-			{"]", typRBrace},
-		}
-	}
-
-	// The first line of output needs to establish that the top-level
-	// thing is actually an array...
-	top := statement{
-		{"json", typBare},
-		{"=", typEquals},
-		{"[]", typEmptyArray},
-		{";", typSemi},
-	}
-
-	if opts&optJSON > 0 {
-		top, err = top.jsonify()
-		if err != nil {
-			goto out
-		}
-	}
-
-	fmt.Fprintln(w, conv(top))
-
-	// Read the input line by line
-	sc = bufio.NewScanner(r)
-	buf = make([]byte, 0, 64*1024)
-	sc.Buffer(buf, 1024*1024)
-	i = 0
-	for sc.Scan() {
-
-		line := bytes.NewBuffer(sc.Bytes())
-
-		var ss statements
-		ss, err = statementsFromJSON(line, makePrefix(i))
-		i++
-		if err != nil {
-			goto out
-		}
-
-		// Go's maps do not have well-defined ordering, but we want a consistent
-		// output for a given input, so we must sort the statements
-		if opts&optNoSort == 0 {
-			sort.Sort(ss)
-		}
-
-		for _, s := range ss {
-			if opts&optJSON > 0 {
-				s, err = s.jsonify()
-				if err != nil {
-					goto out
-				}
-
-			}
-			fmt.Fprintln(w, conv(s))
-		}
-	}
-	if err = sc.Err(); err != nil {
-		errstr = "error reading multiline input: %s"
-	}
-
-out:
-	if err != nil {
-		return exitFormStatements, fmt.Errorf(errstr+": %s", err)
-	}
-	return exitOK, nil
-
-}
-
-// ungron is the reverse of gron. Given assignment statements as input,
-// it returns JSON. The only option is optMonochrome
-func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
-	scanner := bufio.NewScanner(r)
-	var maker statementmaker
-
-	// Allow larger internal buffer of the scanner (min: 64KiB ~ max: 1MiB)
-	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
-
-	if opts&optJSON > 0 {
-		maker = statementFromJSONSpec
-	} else {
-		maker = statementFromStringMaker
-	}
-
-	// Make a list of statements from the input
-	var ss statements
-	for scanner.Scan() {
-		s, err := maker(scanner.Text())
-		if err != nil {
-			return exitParseStatements, err
-		}
-		ss.add(s)
-	}
-	if err := scanner.Err(); err != nil {
-		return exitReadInput, fmt.Errorf("failed to read input statements")
-	}
-
-	// turn the statements into a single merged interface{} type
-	merged, err := ss.toInterface()
-	if err != nil {
-		return exitParseStatements, err
-	}
-
-	// If there's only one top level key and it's "json", make that the top level thing
-	mergedMap, ok := merged.(map[string]interface{})
-	if ok {
-		if len(mergedMap) == 1 {
-			if _, exists := mergedMap["json"]; exists {
-				merged = mergedMap["json"]
-			}
-		}
-	}
-
-	// Marshal the output into JSON to display to the user
-	out := &bytes.Buffer{}
-	enc := json.NewEncoder(out)
-	enc.SetIndent("", "  ")
-	enc.SetEscapeHTML(false)
-	err = enc.Encode(merged)
-	if err != nil {
-		return exitJSONEncode, errors.Wrap(err, "failed to convert statements to JSON")
-	}
-	j := out.Bytes()
-
-	// If the output isn't monochrome, add color to the JSON
-	if opts&optMonochrome == 0 {
-		c, err := colorizeJSON(j)
-
-		// If we failed to colorize the JSON for whatever reason,
-		// we'll just fall back to monochrome output, otherwise
-		// replace the monochrome JSON with glorious technicolor
-		if err == nil {
-			j = c
-		}
-	}
-
-	// For whatever reason, the monochrome version of the JSON
-	// has a trailing newline character, but the colorized version
-	// does not. Strip the whitespace so that neither has the newline
-	// character on the end, and then we'll add a newline in the
-	// Fprintf below
-	j = bytes.TrimSpace(j)
-
-	fmt.Fprintf(w, "%s\n", j)
-
-	return exitOK, nil
-}
-
-func colorizeJSON(src []byte) ([]byte, error) {
-	out := &bytes.Buffer{}
-	f := jsoncolor.NewFormatter()
-
-	f.StringColor = strColor
-	f.ObjectColor = braceColor
-	f.ArrayColor = braceColor
-	f.FieldColor = bareColor
-	f.NumberColor = numColor
-	f.TrueColor = boolColor
-	f.FalseColor = boolColor
-	f.NullColor = boolColor
-
-	err := f.Format(out, src)
-	if err != nil {
-		return out.Bytes(), err
-	}
-	return out.Bytes(), nil
-}
 
 func fatal(code int, err error) {
 	fmt.Fprintf(os.Stderr, "%s\n", err)
