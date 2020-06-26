@@ -61,6 +61,7 @@ func init() {
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
 		h += "  -k, --insecure   Disable certificate validation\n"
 		h += "  -j, --json       Represent gron data as JSON stream\n"
+		h += "  -H, --with-filename Print the filename on each line\n"
 		h += "      --no-sort    Don't sort output (faster)\n"
 		h += "      --version    Print version information\n\n"
 
@@ -79,6 +80,7 @@ func init() {
 		h += "  gron http://jsonplaceholder.typicode.com/users/1 \n"
 		h += "  curl -s http://jsonplaceholder.typicode.com/users/1 | gron\n"
 		h += "  gron http://jsonplaceholder.typicode.com/users/1 | grep company | gron --ungron\n"
+		h += "  find . -type f -exec gron -H ; | grep banana\n"
 
 		fmt.Fprintf(os.Stderr, h)
 	}
@@ -94,6 +96,7 @@ func main() {
 		versionFlag    bool
 		insecureFlag   bool
 		jsonFlag       bool
+		filenameFlag   bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -110,6 +113,8 @@ func main() {
 	flag.BoolVar(&insecureFlag, "insecure", false, "")
 	flag.BoolVar(&jsonFlag, "j", false, "")
 	flag.BoolVar(&jsonFlag, "json", false, "")
+	flag.BoolVar(&filenameFlag, "H", false, "")
+	flag.BoolVar(&filenameFlag, "with-filename", false, "")
 
 	flag.Parse()
 
@@ -123,7 +128,10 @@ func main() {
 	// file, HTTP URL or stdin
 	var rawInput io.Reader
 	filename := flag.Arg(0)
-	if filename == "" || filename == "-" {
+	if filename == "" {
+		filename = "-"
+	}
+	if filename == "-" {
 		rawInput = os.Stdin
 	} else if validURL(filename) {
 		r, err := getURL(filename, insecureFlag)
@@ -162,13 +170,34 @@ func main() {
 	} else if streamFlag {
 		a = gronStream
 	}
-	exitCode, err := a(rawInput, colorable.NewColorableStdout(), opts)
+	var w io.Writer
+	w = colorable.NewColorableStdout()
+	if filenameFlag {
+		w = NewPrefixedWriter(w, filename + ": ")
+	}
+	exitCode, err := a(rawInput, w, opts)
 
 	if exitCode != exitOK {
 		fatal(exitCode, err)
 	}
 
 	os.Exit(exitOK)
+}
+
+// A prefixedWriter pre-pends an initially-specified string to every Write()
+// call.  It wraps another writer, which is used to deliver the combined string
+// to wherever it belongs.
+type prefixedWriter struct {
+	wrappedWriter io.Writer
+	prefixBytes   []byte
+}
+
+func NewPrefixedWriter(w io.Writer, prefix string) io.Writer {
+	return &prefixedWriter{wrappedWriter: w, prefixBytes: []byte(prefix)}
+}
+
+func (w prefixedWriter) Write(p []byte) (int, error) {
+	return w.wrappedWriter.Write(append(w.prefixBytes, p...))
 }
 
 // an actionFn represents a main action of the program, it accepts
