@@ -19,6 +19,7 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+        "reflect"
 
 	"github.com/pkg/errors"
 )
@@ -456,12 +457,12 @@ func recursiveMerge(a, b interface{}) (interface{}, error) {
 		}
 		return recursiveSliceMerge(a.([]interface{}), bSlice)
 
-	case string, int, float64, bool, nil:
+	case string, int, float64, bool, nil, json.Number:
 		// Can't merge them, second one wins
 		return b, nil
 
 	default:
-		return nil, fmt.Errorf("unexpected data type for merge")
+		return nil, fmt.Errorf("unexpected data type for merge: `%s`", reflect.TypeOf(a))
 	}
 }
 
