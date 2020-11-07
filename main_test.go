@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -48,6 +50,42 @@ func TestGron(t *testing.T) {
 		}
 	}
 
+}
+
+func TestPrefixedFilenameWriter(t *testing.T) {
+	prefixes := []string{
+		"testdata/one.json: ",
+		"testdata/two.json: ",
+		"testdata/three.json: ",
+		"testdata/github.json: ",
+	}
+	lines := []string{
+		"Line 1",
+		"Another line 2",
+		"a 3rd Line",
+	}
+
+	for _, p := range prefixes {
+		wrappedWriter := &bytes.Buffer{}
+		writer := NewPrefixedWriter(wrappedWriter, p)
+		for _, l := range lines {
+			fmt.Fprintln(writer, l)
+		}
+		s := bufio.NewScanner(wrappedWriter)
+		var have []string
+		for s.Scan() {
+			have = append(have, s.Text())
+		}
+		if len(have) != len(lines) {
+			t.Errorf("want %d lines, have %d lines", len(lines), len(have))
+		}
+		for i, l := range lines {
+			want := p + l
+			if have[i] != want {
+				t.Errorf("line %d\nwant: %s\nhave: %s", i, want, have[i])
+			}
+		}
+	}
 }
 
 func TestGronStream(t *testing.T) {
