@@ -116,10 +116,14 @@ func (t token) formatColor() string {
 func valueTokenFromInterface(v interface{}) token {
 	switch vv := v.(type) {
 
+	case map[interface{}]interface{}:
+		return token{"{}", typEmptyObject}
 	case map[string]interface{}:
 		return token{"{}", typEmptyObject}
 	case []interface{}:
 		return token{"[]", typEmptyArray}
+	case int, float64:
+		return token{fmt.Sprintf("%v", vv), typNumber}
 	case json.Number:
 		return token{vv.String(), typNumber}
 	case string:

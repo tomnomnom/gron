@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/go-yaml/yaml"
 	"github.com/mattn/go-colorable"
 	"github.com/nwidger/jsoncolor"
 	"github.com/pkg/errors"
@@ -33,6 +34,7 @@ const (
 	optMonochrome = 1 << iota
 	optNoSort
 	optJSON
+	optYAML
 )
 
 // Output colors
@@ -50,7 +52,7 @@ var gronVersion = "dev"
 
 func init() {
 	flag.Usage = func() {
-		h := "Transform JSON (from a file, URL, or stdin) into discrete assignments to make it greppable\n\n"
+		h := "Transform JSON or YAML (from a file, URL, or stdin) into discrete assignments to make it greppable\n\n"
 
 		h += "Usage:\n"
 		h += "  gron [OPTIONS] [FILE|URL|-]\n\n"
@@ -62,6 +64,7 @@ func init() {
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
 		h += "  -k, --insecure   Disable certificate validation\n"
 		h += "  -j, --json       Represent gron data as JSON stream\n"
+		h += "  -y, --yaml       Treat input as YAML instead of JSON\n"
 		h += "      --no-sort    Don't sort output (faster)\n"
 		h += "      --version    Print version information\n\n"
 
@@ -95,6 +98,7 @@ func main() {
 		versionFlag    bool
 		insecureFlag   bool
 		jsonFlag       bool
+		yamlFlag       bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -111,6 +115,8 @@ func main() {
 	flag.BoolVar(&insecureFlag, "insecure", false, "")
 	flag.BoolVar(&jsonFlag, "j", false, "")
 	flag.BoolVar(&jsonFlag, "json", false, "")
+	flag.BoolVar(&yamlFlag, "y", false, "")
+	flag.BoolVar(&yamlFlag, "yaml", false, "")
 
 	flag.Parse()
 
@@ -160,6 +166,9 @@ func main() {
 	if jsonFlag {
 		opts = opts | optJSON
 	}
+	if yamlFlag {
+		opts = opts | optYAML
+	}
 
 	// Pick the appropriate action: gron, ungron or gronStream
 	var a actionFn = gron
@@ -182,6 +191,20 @@ func main() {
 // code and any error that occurred
 type actionFn func(io.Reader, io.Writer, int) (int, error)
 
+type decoder interface {
+	Decode(interface{}) error
+}
+
+func makeDecoder(r io.Reader, opts int) decoder {
+	if opts&optYAML > 0 {
+		return yaml.NewDecoder(r)
+	} else {
+		d := json.NewDecoder(r)
+		d.UseNumber()
+		return d
+	}
+}
+
 // gron is the default action. Given JSON as the input it returns a list
 // of assignment statements. Possible options are optNoSort and optMonochrome
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
@@ -194,7 +217,12 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 		conv = statementToColorString
 	}
 
-	ss, err := statementsFromJSON(r, statement{{"json", typBare}})
+	top := "json"
+	if opts&optYAML > 0 {
+		top = "yaml"
+	}
+
+	ss, err := statementsFromJSON(makeDecoder(r, opts), statement{{top, typBare}})
 	if err != nil {
 		goto out
 	}
@@ -274,10 +302,10 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 	i = 0
 	for sc.Scan() {
 
-		line := bytes.NewBuffer(sc.Bytes())
+		d := makeDecoder(bytes.NewBuffer(sc.Bytes()), opts)
 
 		var ss statements
-		ss, err = statementsFromJSON(line, makePrefix(i))
+		ss, err = statementsFromJSON(d, makePrefix(i))
 		i++
 		if err != nil {
 			goto out

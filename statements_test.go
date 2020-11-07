@@ -33,7 +33,7 @@ func TestStatementsSimple(t *testing.T) {
 		"": 2
 	}`)
 
-	ss, err := statementsFromJSON(bytes.NewReader(j), statement{{"json", typBare}})
+	ss, err := statementsFromJSON(makeDecoder(bytes.NewReader(j), 0), statement{{"json", typBare}})
 
 	if err != nil {
 		t.Errorf("Want nil error from makeStatementsFromJSON() but got %s", err)
@@ -65,6 +65,56 @@ func TestStatementsSimple(t *testing.T) {
 
 }
 
+func TestStatementsSimpleYaml(t *testing.T) {
+
+	j := []byte(`'': 2
+a quoted: value
+anarr:
+- 1
+- 1.5
+anob:
+  foo: bar
+anull: 
+bool1: true
+bool2: false
+dotted: A dotted value
+else: 1
+x: |
+  y: "z"
+id: 66912849`)
+
+	ss, err := statementsFromJSON(makeDecoder(bytes.NewReader(j), optYAML), statement{{"yaml", typBare}})
+
+	if err != nil {
+		t.Errorf("Want nil error from makeStatementsFromJSON() but got %s", err)
+	}
+
+	wants := statementsFromStringSlice([]string{
+		`yaml = {};`,
+		`yaml.dotted = "A dotted value";`,
+		`yaml["a quoted"] = "value";`,
+		`yaml.bool1 = true;`,
+		`yaml.bool2 = false;`,
+		`yaml.anull = null;`,
+		`yaml.anarr = [];`,
+		`yaml.anarr[0] = 1;`,
+		`yaml.anarr[1] = 1.5;`,
+		`yaml.anob = {};`,
+		`yaml.anob.foo = "bar";`,
+		`yaml["else"] = 1;`,
+		`yaml.id = 66912849;`,
+		`yaml[""] = 2;`,
+		`yaml.x = "y: \"z\"\n";`,
+	})
+
+	t.Logf("Have: %#v", ss)
+	for _, want := range wants {
+		if !ss.Contains(want) {
+			t.Errorf("Statement group should contain `%s` but doesn't", want)
+		}
+	}
+
+}
 func TestStatementsSorting(t *testing.T) {
 	want := statementsFromStringSlice([]string{
 		`json.a = true;`,
