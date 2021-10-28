@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-colorable"
@@ -122,6 +123,11 @@ func main() {
 	if versionFlag {
 		fmt.Printf("gron version %s\n", gronVersion)
 		os.Exit(exitOK)
+	}
+
+	// If executed as 'ungron' set the --ungron flag
+	if strings.HasSuffix(os.Args[0], "ungron") {
+		ungronFlag = true
 	}
 
 	// Determine what the program's input should be:
