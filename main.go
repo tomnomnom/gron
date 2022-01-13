@@ -33,6 +33,7 @@ const (
 	optMonochrome = 1 << iota
 	optNoSort
 	optJSON
+	optSlurp
 )
 
 // Output colors
@@ -95,6 +96,7 @@ func main() {
 		versionFlag    bool
 		insecureFlag   bool
 		jsonFlag       bool
+		slurpFlag      bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -111,6 +113,8 @@ func main() {
 	flag.BoolVar(&insecureFlag, "insecure", false, "")
 	flag.BoolVar(&jsonFlag, "j", false, "")
 	flag.BoolVar(&jsonFlag, "json", false, "")
+	flag.BoolVar(&slurpFlag, "S", false, "")
+	flag.BoolVar(&slurpFlag, "slurp", false, "")
 
 	flag.Parse()
 
@@ -160,6 +164,9 @@ func main() {
 	if jsonFlag {
 		opts = opts | optJSON
 	}
+	if slurpFlag {
+		opts = opts | optSlurp
+	}
 
 	// Pick the appropriate action: gron, ungron or gronStream
 	var a actionFn = gron
@@ -186,15 +193,28 @@ type actionFn func(io.Reader, io.Writer, int) (int, error)
 // of assignment statements. Possible options are optNoSort and optMonochrome
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 	var err error
-
+	var ss statements
 	var conv statementconv
+
+	// We use a proxy for `r` because slurp mode might swap it out for
+	// a `bytes.Reader`.
+	var br io.Reader = r
+
+	if opts&optSlurp == optSlurp {
+		tmp, err := io.ReadAll(r)
+		if err != nil {
+			goto out
+		}
+		br = bytes.NewReader(tmp)
+	}
+
 	if opts&optMonochrome > 0 {
 		conv = statementToString
 	} else {
 		conv = statementToColorString
 	}
 
-	ss, err := statementsFromJSON(r, statement{{"json", typBare}})
+	ss, err = statementsFromJSON(br, statement{{"json", typBare}})
 	if err != nil {
 		goto out
 	}
@@ -232,7 +252,35 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 	var sc *bufio.Scanner
 	var buf []byte
 
+	// The `goto out` error handling in slurp mode forces us to declare these here.
+	var top statement
+	var makePrefix func(index int) statement
 	var conv func(s statement) string
+
+	// We use a proxy for `r` because slurp mode might swap it out for
+	// a `bytes.Reader`.
+	var br io.Reader = r
+
+	// We need to set these here because slurping probably needs more space
+	// and we'll have to update them.
+	bufsize := 64 * 1024
+	scansize := 1024 * 1024
+
+	if opts&optSlurp == optSlurp {
+		tmp, err := io.ReadAll(r)
+		if err != nil {
+			goto out
+		}
+
+		// Swap our previous reader for our new fully loaded one.
+		br = bytes.NewReader(tmp)
+
+		// Since we know how big our data is, we can set the scanning
+		// buffer to be that size + 1 for minimal memory usage.
+		bufsize = len(tmp)
+		scansize = bufsize + 1
+	}
+
 	if opts&optMonochrome > 0 {
 		conv = statementToString
 	} else {
@@ -240,7 +288,7 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 	}
 
 	// Helper function to make the prefix statements for each line
-	makePrefix := func(index int) statement {
+	makePrefix = func(index int) statement {
 		return statement{
 			{"json", typBare},
 			{"[", typLBrace},
@@ -251,7 +299,7 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 
 	// The first line of output needs to establish that the top-level
 	// thing is actually an array...
-	top := statement{
+	top = statement{
 		{"json", typBare},
 		{"=", typEquals},
 		{"[]", typEmptyArray},
@@ -268,9 +316,11 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 	fmt.Fprintln(w, conv(top))
 
 	// Read the input line by line
-	sc = bufio.NewScanner(r)
-	buf = make([]byte, 0, 64*1024)
-	sc.Buffer(buf, 1024*1024)
+	sc = bufio.NewScanner(br)
+
+	buf = make([]byte, 0, bufsize)
+	sc.Buffer(buf, scansize)
+
 	i = 0
 	for sc.Scan() {
 
@@ -301,7 +351,7 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 		}
 	}
 	if err = sc.Err(); err != nil {
-		errstr = "error reading multiline input: %s"
+		errstr = "error reading multiline input"
 	}
 
 out:
