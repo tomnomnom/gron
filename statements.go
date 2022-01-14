@@ -398,6 +398,21 @@ func statementsFromJSON(r io.Reader, prefix statement) (statements, error) {
 	return ss, nil
 }
 
+// statementsFromJSONOffset takes an io.Reader containing JSON
+// and returns statements or an error on failure
+func statementsFromJSONOffset(r io.Reader, prefix statement) (statements, int64, error) {
+	var top interface{}
+	d := json.NewDecoder(r)
+	d.UseNumber()
+	err := d.Decode(&top)
+	if err != nil {
+		return nil, 0, err
+	}
+	ss := make(statements, 0, 32)
+	ss.fill(prefix, top)
+	return ss, d.InputOffset(), nil
+}
+
 // fill takes a prefix statement and some value and recursively fills
 // the statement list using that value
 func (ss *statements) fill(prefix statement, v interface{}) {
