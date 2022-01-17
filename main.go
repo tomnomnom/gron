@@ -33,6 +33,7 @@ const (
 	optMonochrome = 1 << iota
 	optNoSort
 	optJSON
+	optAllObjects
 )
 
 // Output colors
@@ -95,6 +96,7 @@ func main() {
 		versionFlag    bool
 		insecureFlag   bool
 		jsonFlag       bool
+		allObjectsFlag bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -111,6 +113,8 @@ func main() {
 	flag.BoolVar(&insecureFlag, "insecure", false, "")
 	flag.BoolVar(&jsonFlag, "j", false, "")
 	flag.BoolVar(&jsonFlag, "json", false, "")
+	flag.BoolVar(&allObjectsFlag, "a", false, "")
+	flag.BoolVar(&allObjectsFlag, "all", false, "")
 
 	flag.Parse()
 
@@ -165,9 +169,12 @@ func main() {
 	var a actionFn = gron
 	if ungronFlag {
 		a = ungron
+	} else if allObjectsFlag {
+		a = gronStreamAll
 	} else if streamFlag {
 		a = gronStream
 	}
+
 	exitCode, err := a(rawInput, colorable.NewColorableStdout(), opts)
 
 	if exitCode != exitOK {
@@ -299,6 +306,117 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 			}
 			fmt.Fprintln(w, conv(s))
 		}
+	}
+	if err = sc.Err(); err != nil {
+		errstr = "error reading multiline input: %s"
+	}
+
+out:
+	if err != nil {
+		return exitFormStatements, fmt.Errorf(errstr+": %s", err)
+	}
+	return exitOK, nil
+
+}
+
+// gronStreamAll is like the gron action, but it treats the input
+// as multiple JSON objects. There's a bit of code duplication from the
+// gron action, but it'd be fairly messy to combine the two actions
+func gronStreamAll(r io.Reader, w io.Writer, opts int) (int, error) {
+	var err error
+	errstr := "failed to form statements"
+	var i int
+	var sc *bufio.Scanner
+	var buf []byte
+	var conv func(s statement) string
+	var top statement
+	var makePrefix func(index int) statement
+	var moved int64
+
+	// In order to read all the objects, we need a positionable stream
+	// because the JSON decoder reads past the end of a complete JSON
+	// item in order to complete a parse.  Using `Seek()` doesn't work
+	// that well because whilst we have the position of the end of the
+	// JSON parse (via `d.InputOffset()`), we don't know the current
+	// position of the stream (and thus can't use `io.SeekCurrent`)
+	// meaning we have to `io.SeekStart` every time and that ends up
+	// getting progressively slower each time.  Instead we use
+	// a `bytes.Buffer` as our `io.Reader`.
+	buf, err = io.ReadAll(r)
+	if err != nil {
+		goto out
+	}
+
+	if opts&optMonochrome > 0 {
+		conv = statementToString
+	} else {
+		conv = statementToColorString
+	}
+
+	// Helper function to make the prefix statements for each line
+	makePrefix = func(index int) statement {
+		return statement{
+			{"json", typBare},
+			{"[", typLBrace},
+			{fmt.Sprintf("%d", index), typNumericKey},
+			{"]", typRBrace},
+		}
+	}
+
+	// The first line of output needs to establish that the top-level
+	// thing is actually an array...
+	top = statement{
+		{"json", typBare},
+		{"=", typEquals},
+		{"[]", typEmptyArray},
+		{";", typSemi},
+	}
+
+	if opts&optJSON > 0 {
+		top, err = top.jsonify()
+		if err != nil {
+			goto out
+		}
+	}
+
+	fmt.Fprintln(w, conv(top))
+
+	i = 0
+
+	for {
+		var offset int64
+		var ss statements
+
+		br := bytes.NewReader(buf[moved:])
+
+		ss, offset, err = statementsFromJSONOffset(br, makePrefix(i))
+		i++
+		if err != nil && err != io.EOF {
+			goto out
+		}
+
+		// Go's maps do not have well-defined ordering, but we want a consistent
+		// output for a given input, so we must sort the statements
+		if opts&optNoSort == 0 {
+			sort.Sort(ss)
+		}
+
+		for _, s := range ss {
+			if opts&optJSON > 0 {
+				s, err = s.jsonify()
+				if err != nil {
+					goto out
+				}
+
+			}
+			fmt.Fprintln(w, conv(s))
+		}
+
+		if err == io.EOF {
+			return exitOK, nil
+		}
+
+		moved = moved + offset
 	}
 	if err = sc.Err(); err != nil {
 		errstr = "error reading multiline input: %s"
