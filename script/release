@@ -28,7 +28,7 @@ fi
 
 FILELIST=""
 
-for ARCH in "amd64" "386"; do
+for ARCH in "amd64" "386" "arm64"; do
     for OS in "darwin" "linux" "windows" "freebsd"; do
 
         if [[ "${OS}" == "darwin" && "${ARCH}" == "386" ]]; then
