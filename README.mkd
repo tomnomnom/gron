@@ -46,10 +46,10 @@ If you're a Mac user you can also [install gron via brew](http://braumeister.org
 ▶ brew install gron
 ```
 
-Or if you're a Go user you can use `go get` (if you're using Go 1.7 or newer):
+Or if you're a Go user you can use `go install`:
 
 ```
-▶ go get -u github.com/tomnomnom/gron
+▶ go install github.com/tomnomnom/gron@latest
 ```
 
 It's recommended that you alias `ungron` or `norg` (or both!) to `gron --ungron`. Put something like this in your shell profile (e.g. in `~/.bashrc`):
@@ -217,6 +217,7 @@ Usage:
 
 Options:
   -u, --ungron     Reverse the operation (turn assignments back into JSON)
+  -v, --values     Print just the values of provided assignments
   -c, --colorize   Colorize output (default on tty)
   -m, --monochrome Monochrome (don't colorize output)
   -s, --stream     Treat each line of input as a separate JSON object

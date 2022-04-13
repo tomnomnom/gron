@@ -8,3 +8,5 @@ github.com/nwidger/jsoncolor v0.0.0-20170215171346-75a6de4340e5 h1:d+C3xJdxZT7wN
 github.com/nwidger/jsoncolor v0.0.0-20170215171346-75a6de4340e5/go.mod h1:GYFm0zZgTNeoK1QxuIofRDasy2ibmaJZhZLzwsMXUF4=
 github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+golang.org/x/sys v0.0.0-20220412211240-33da011f77ad h1:ntjMns5wyP/fN65tdBD4g8J5w8n015+iIIs9rtjXkY0=
+golang.org/x/sys v0.0.0-20220412211240-33da011f77ad/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

@@ -26,23 +26,14 @@ if [ $? -ne 0 ]; then
     exit 3
 fi
 
-# Check if tag exists
-git fetch --tags
-git tag | grep "^${TAG}$"
-
-if [ $? -ne 0 ]; then
-    github-release release \
-        --user ${USER} \
-        --repo ${REPO} \
-        --tag ${TAG} \
-        --name "${REPO} ${TAG}" \
-        --description "${TAG}" \
-        --pre-release
-fi
-
+FILELIST=""
 
 for ARCH in "amd64" "386"; do
     for OS in "darwin" "linux" "windows" "freebsd"; do
+
+        if [[ "${OS}" == "darwin" && "${ARCH}" == "386" ]]; then
+            continue
+        fi
 
         BINFILE="${BINARY}"
 
@@ -52,22 +43,21 @@ for ARCH in "amd64" "386"; do
 
         rm -f ${BINFILE}
 
-        GOOS=${OS} GOARCH=${ARCH} go build -ldflags "-X main.gronVersion=${VERSION}" github.com/${USER}/${REPO}
+        GOOS=${OS} GOARCH=${ARCH} go build github.com/${USER}/${REPO}
 
         if [[ "${OS}" == "windows" ]]; then
             ARCHIVE="${BINARY}-${OS}-${ARCH}-${VERSION}.zip"
             zip ${ARCHIVE} ${BINFILE}
+            rm ${BINFILE}
         else
             ARCHIVE="${BINARY}-${OS}-${ARCH}-${VERSION}.tgz"
             tar --create --gzip --file=${ARCHIVE} ${BINFILE}
         fi
 
-        echo "Uploading ${ARCHIVE}..."
-        github-release upload \
-            --user ${USER} \
-            --repo ${REPO} \
-            --tag ${TAG} \
-            --name "${ARCHIVE}" \
-            --file ${PROJDIR}/${ARCHIVE}
+        FILELIST="${FILELIST} ${PROJDIR}/${ARCHIVE}"
     done
 done
+
+gh release create ${TAG} ${FILELIST}
+rm ${FILELIST}
+

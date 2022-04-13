@@ -57,6 +57,7 @@ func init() {
 
 		h += "Options:\n"
 		h += "  -u, --ungron     Reverse the operation (turn assignments back into JSON)\n"
+		h += "  -v, --values     Print just the values of provided assignments\n"
 		h += "  -c, --colorize   Colorize output (default on tty)\n"
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
@@ -95,6 +96,7 @@ func main() {
 		versionFlag    bool
 		insecureFlag   bool
 		jsonFlag       bool
+		valuesFlag     bool
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -111,6 +113,9 @@ func main() {
 	flag.BoolVar(&insecureFlag, "insecure", false, "")
 	flag.BoolVar(&jsonFlag, "j", false, "")
 	flag.BoolVar(&jsonFlag, "json", false, "")
+	flag.BoolVar(&valuesFlag, "values", false, "")
+	flag.BoolVar(&valuesFlag, "value", false, "")
+	flag.BoolVar(&valuesFlag, "v", false, "")
 
 	flag.Parse()
 
@@ -161,10 +166,12 @@ func main() {
 		opts = opts | optJSON
 	}
 
-	// Pick the appropriate action: gron, ungron or gronStream
+	// Pick the appropriate action: gron, ungron, gronValues, or gronStream
 	var a actionFn = gron
 	if ungronFlag {
 		a = ungron
+	} else if valuesFlag {
+		a = gronValues
 	} else if streamFlag {
 		a = gronStream
 	}
@@ -387,6 +394,48 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	j = bytes.TrimSpace(j)
 
 	fmt.Fprintf(w, "%s\n", j)
+
+	return exitOK, nil
+}
+
+// gronValues prints just the scalar values from some input gron statements
+// without any quotes or anything of that sort; a bit like jq -r
+// e.g. json[0].user.name = "Sam"; -> Sam
+func gronValues(r io.Reader, w io.Writer, opts int) (int, error) {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		s := statementFromString(scanner.Text())
+
+		// strip off the leading 'json' bare key
+		if s[0].typ == typBare && s[0].text == "json" {
+			s = s[1:]
+		}
+
+		// strip off the leading dots
+		if s[0].typ == typDot || s[0].typ == typLBrace {
+			s = s[1:]
+		}
+
+		for _, t := range s {
+			switch t.typ {
+			case typString:
+				var text string
+				err := json.Unmarshal([]byte(t.text), &text)
+				if err != nil {
+					// just swallow errors and try to continue
+					continue
+				}
+				fmt.Println(text)
+
+			case typNumber, typTrue, typFalse, typNull:
+				fmt.Println(t.text)
+
+			default:
+				// Nothing
+			}
+		}
+	}
 
 	return exitOK, nil
 }
