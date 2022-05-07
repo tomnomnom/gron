@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
+	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -15,9 +18,66 @@ func validURL(url string) bool {
 	return r.MatchString(url)
 }
 
-func getURL(url string, insecure bool) (io.Reader, error) {
+func configureProxy(url string, proxyRef *string, noProxyRef *string) func(*http.Request) (*neturl.URL, error) {
+	var proxy, noProxy string
+
+	cURL, err := neturl.Parse(url)
+	if err != nil {
+		return nil
+	}
+
+	// Direct arguments are superior to environment variables.
+	if proxyRef != nil {
+		proxy = *proxyRef
+	} else {
+		proxy = os.Getenv(fmt.Sprintf("%s_proxy", cURL.Scheme))
+	}
+	if proxy == "" {
+		// Skip setting a proxy if no environment variable has been set.
+		return nil
+	}
+
+	// Test if any of the hosts mentioned in the noProxy variable or the
+	// no_proxy env variable. Skip setting up the proxy if a match is found.
+	if noProxyRef != nil {
+		noProxy = *noProxyRef
+	} else {
+		noProxy = os.Getenv("no_proxy")
+	}
+	noProxyHosts := strings.Split(noProxy, ",")
+	if len(noProxyHosts) > 0 {
+		for _, noProxyHost := range noProxyHosts {
+			if len(noProxyHost) == 0 {
+				continue
+			}
+			// Test for direct matches of the hostname.
+			if cURL.Host == noProxyHost {
+				return nil
+			}
+			// Match through wildcard-like pattern, e.g. ".foobar.com" should
+			// match all subdomains of foobar.com.
+			if strings.HasPrefix(noProxyHost, ".") && strings.HasSuffix(cURL.Host, noProxyHost) {
+				return nil
+			}
+		}
+	}
+
+	proxyURL, err := neturl.Parse(proxy)
+	if err != nil {
+		return nil
+	}
+
+	return http.ProxyURL(proxyURL)
+}
+
+func getURL(url string, insecure bool, proxyURL *string, noProxy *string) (io.Reader, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+	}
+	// Set proxy if defined.
+	proxy := configureProxy(url, proxyURL, noProxy)
+	if proxy != nil {
+		tr.Proxy = proxy
 	}
 	client := http.Client{
 		Transport: tr,

@@ -62,6 +62,7 @@ func init() {
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
 		h += "  -k, --insecure   Disable certificate validation\n"
+		h += "  -x, --proxy      Set proxy configuration\n"
 		h += "  -j, --json       Represent gron data as JSON stream\n"
 		h += "      --no-sort    Don't sort output (faster)\n"
 		h += "      --version    Print version information\n\n"
@@ -97,6 +98,8 @@ func main() {
 		insecureFlag   bool
 		jsonFlag       bool
 		valuesFlag     bool
+		proxyURL       string
+		noProxy        string
 	)
 
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
@@ -116,6 +119,9 @@ func main() {
 	flag.BoolVar(&valuesFlag, "values", false, "")
 	flag.BoolVar(&valuesFlag, "value", false, "")
 	flag.BoolVar(&valuesFlag, "v", false, "")
+	flag.StringVar(&proxyURL, "x", "", "")
+	flag.StringVar(&proxyURL, "proxy", "", "")
+	flag.StringVar(&noProxy, "noproxy", "", "")
 
 	flag.Parse()
 
@@ -137,7 +143,7 @@ func main() {
 	if filename == "" || filename == "-" {
 		rawInput = os.Stdin
 	} else if validURL(filename) {
-		r, err := getURL(filename, insecureFlag)
+		r, err := getURL(filename, insecureFlag, &proxyURL, &noProxy)
 		if err != nil {
 			fatal(exitFetchURL, err)
 		}
