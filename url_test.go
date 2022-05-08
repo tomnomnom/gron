@@ -25,40 +25,38 @@ func TestValidURL(t *testing.T) {
 	}
 }
 
-func TestConfigureProxyHttpWithEnv(t *testing.T) {
-	emptyStr := ""
-
+func TestConfigureProxyHttp(t *testing.T) {
 	tests := []struct {
 		url          string
-		httpProxy    *string
+		httpProxy    string
 		envHttpProxy string
-		noProxy      *string
+		noProxy      string
 		envNoProxy   string
 		hasProxy     bool
 	}{
 		// http proxy via env variables
-		{"http://test1.com", nil, "http://localhost:1234", nil, "", true},
-		{"https://test1.com", nil, "http://localhost:1234", nil, "", false},
-		{"schema://test1.com", nil, "http://localhost:1234", nil, "", false},
+		{"http://test1.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "", true},
+		{"https://test1.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "", false},
+		{"schema://test1.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "", false},
 
 		// http proxy with env variables, overwritten by argument
-		{"http://test2.com", &emptyStr, "http://localhost:1234", nil, "", false},
-		{"https://test2.com", &emptyStr, "http://localhost:1234", nil, "", false},
-		{"schema://test2.com", &emptyStr, "http://localhost:1234", nil, "", false},
+		{"http://test2.com", "", "http://localhost:1234", undefinedProxy, "", false},
+		{"https://test2.com", "", "http://localhost:1234", undefinedProxy, "", false},
+		{"schema://test2.com", "", "http://localhost:1234", undefinedProxy, "", false},
 
 		// http proxy with env variables, domain excluded by no_proxy
-		{"http://test3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
-		{"http://foobar3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
-		{"http://test.foobar3.com", nil, "http://localhost:1234", nil, ".foobar3.com", false},
-		{"https://test3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
-		{"schema://test3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
+		{"http://test3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
+		{"http://foobar3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
+		{"http://test.foobar3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, ".foobar3.com", false},
+		{"https://test3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
+		{"schema://test3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
 
 		// http proxy with env variables, domain excluded by no_proxy, overwritten by argument
-		{"http://test4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", true},
-		{"http://foobar4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", true},
-		{"http://test.foobar4.com", nil, "http://localhost:1234", &emptyStr, ".foobar4.com", true},
-		{"https://test4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", false},
-		{"schema://test4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", false},
+		{"http://test4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", true},
+		{"http://foobar4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", true},
+		{"http://test.foobar4.com", undefinedProxy, "http://localhost:1234", "", ".foobar4.com", true},
+		{"https://test4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", false},
+		{"schema://test4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", false},
 	}
 
 	for _, test := range tests {
@@ -74,40 +72,38 @@ func TestConfigureProxyHttpWithEnv(t *testing.T) {
 	}
 }
 
-func TestConfigureProxyHttpsWithEnv(t *testing.T) {
-	emptyStr := ""
-
+func TestConfigureProxyHttps(t *testing.T) {
 	tests := []struct {
 		url           string
-		httpsProxy    *string
+		httpsProxy    string
 		envHttpsProxy string
-		noProxy       *string
+		noProxy       string
 		envNoProxy    string
 		hasProxy      bool
 	}{
-		// http proxy via env variables
-		{"http://test1.com", nil, "http://localhost:1234", nil, "", false},
-		{"https://test1.com", nil, "http://localhost:1234", nil, "", true},
-		{"schema://test1.com", nil, "http://localhost:1234", nil, "", false},
+		// https proxy via env variables
+		{"http://test1.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "", false},
+		{"https://test1.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "", true},
+		{"schema://test1.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "", false},
 
-		// http proxy with env variables, overwritten by argument
-		{"http://test2.com", &emptyStr, "http://localhost:1234", nil, "", false},
-		{"https://test2.com", &emptyStr, "http://localhost:1234", nil, "", false},
-		{"schema://test2.com", &emptyStr, "http://localhost:1234", nil, "", false},
+		// https proxy with env variables, overwritten by argument
+		{"http://test2.com", "", "http://localhost:1234", undefinedProxy, "", false},
+		{"https://test2.com", "", "http://localhost:1234", undefinedProxy, "", false},
+		{"schema://test2.com", "", "http://localhost:1234", undefinedProxy, "", false},
 
-		// http proxy with env variables, domain excluded by no_proxy
-		{"http://test3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
-		{"http://foobar3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
-		{"http://test.foobar3.com", nil, "http://localhost:1234", nil, ".foobar3.com", false},
-		{"https://test3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
-		{"schema://test3.com", nil, "http://localhost:1234", nil, "test3.com,foobar3.com", false},
+		// https proxy with env variables, domain excluded by no_proxy
+		{"http://test3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
+		{"http://foobar3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
+		{"http://test.foobar3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, ".foobar3.com", false},
+		{"https://test3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
+		{"schema://test3.com", undefinedProxy, "http://localhost:1234", undefinedProxy, "test3.com,foobar3.com", false},
 
-		// http proxy with env variables, domain excluded by no_proxy, overwritten by argument
-		{"http://test4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", false},
-		{"http://foobar4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", false},
-		{"http://test.foobar4.com", nil, "http://localhost:1234", &emptyStr, ".foobar4.com", false},
-		{"https://test4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", true},
-		{"schema://test4.com", nil, "http://localhost:1234", &emptyStr, "test4.com,foobar4.com", false},
+		// https proxy with env variables, domain excluded by no_proxy, overwritten by argument
+		{"http://test4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", false},
+		{"http://foobar4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", false},
+		{"http://test.foobar4.com", undefinedProxy, "http://localhost:1234", "", ".foobar4.com", false},
+		{"https://test4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", true},
+		{"schema://test4.com", undefinedProxy, "http://localhost:1234", "", "test4.com,foobar4.com", false},
 	}
 
 	for _, test := range tests {

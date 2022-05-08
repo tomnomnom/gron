@@ -18,30 +18,25 @@ func validURL(url string) bool {
 	return r.MatchString(url)
 }
 
-func configureProxy(url string, proxyRef *string, noProxyRef *string) func(*http.Request) (*neturl.URL, error) {
-	var proxy, noProxy string
-
+func configureProxy(url string, proxy string, noProxy string) func(*http.Request) (*neturl.URL, error) {
 	cURL, err := neturl.Parse(url)
 	if err != nil {
 		return nil
 	}
 
 	// Direct arguments are superior to environment variables.
-	if proxyRef != nil {
-		proxy = *proxyRef
-	} else {
+	if proxy == undefinedProxy {
 		proxy = os.Getenv(fmt.Sprintf("%s_proxy", cURL.Scheme))
 	}
 	if proxy == "" {
-		// Skip setting a proxy if no environment variable has been set.
+		// Skip setting a proxy if no proxy has been set through env variable or
+		// argument.
 		return nil
 	}
 
 	// Test if any of the hosts mentioned in the noProxy variable or the
 	// no_proxy env variable. Skip setting up the proxy if a match is found.
-	if noProxyRef != nil {
-		noProxy = *noProxyRef
-	} else {
+	if noProxy == undefinedProxy {
 		noProxy = os.Getenv("no_proxy")
 	}
 	noProxyHosts := strings.Split(noProxy, ",")
@@ -70,7 +65,7 @@ func configureProxy(url string, proxyRef *string, noProxyRef *string) func(*http
 	return http.ProxyURL(proxyURL)
 }
 
-func getURL(url string, insecure bool, proxyURL *string, noProxy *string) (io.Reader, error) {
+func getURL(url string, insecure bool, proxyURL string, noProxy string) (io.Reader, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
 	}
