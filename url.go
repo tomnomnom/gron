@@ -28,17 +28,18 @@ func configureProxy(url string, proxy string, noProxy string) func(*http.Request
 	if proxy == undefinedProxy {
 		proxy = os.Getenv(fmt.Sprintf("%s_proxy", cURL.Scheme))
 	}
+	if noProxy == undefinedProxy {
+		noProxy = os.Getenv("no_proxy")
+	}
+
+	// Skip setting a proxy if no proxy has been set through env variable or
+	// argument.
 	if proxy == "" {
-		// Skip setting a proxy if no proxy has been set through env variable or
-		// argument.
 		return nil
 	}
 
 	// Test if any of the hosts mentioned in the noProxy variable or the
 	// no_proxy env variable. Skip setting up the proxy if a match is found.
-	if noProxy == undefinedProxy {
-		noProxy = os.Getenv("no_proxy")
-	}
 	noProxyHosts := strings.Split(noProxy, ",")
 	if len(noProxyHosts) > 0 {
 		for _, noProxyHost := range noProxyHosts {
