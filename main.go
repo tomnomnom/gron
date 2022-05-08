@@ -125,7 +125,7 @@ func main() {
 	flag.BoolVar(&valuesFlag, "values", false, "")
 	flag.BoolVar(&valuesFlag, "value", false, "")
 	flag.BoolVar(&valuesFlag, "v", false, "")
-	flag.StringVar(&proxyURL, "x", "", "")
+	flag.StringVar(&proxyURL, "x", undefinedProxy, "")
 	flag.StringVar(&proxyURL, "proxy", undefinedProxy, "")
 	flag.StringVar(&noProxy, "noproxy", undefinedProxy, "")
 
