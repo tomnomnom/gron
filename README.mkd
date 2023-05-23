@@ -46,6 +46,11 @@ If you're a Mac user you can also [install gron via brew](http://braumeister.org
 ▶ brew install gron
 ```
 
+If you're a Windows user you can also install gron via [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/):
+```
+▶ winget install TomHudson.gron
+```
+
 Or if you're a Go user you can use `go install`:
 
 ```
