@@ -8,5 +8,5 @@ require (
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/nwidger/jsoncolor v0.0.0-20170215171346-75a6de4340e5
 	github.com/pkg/errors v0.8.0
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
