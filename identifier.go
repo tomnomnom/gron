@@ -45,9 +45,10 @@ var reservedWords = map[string]bool{
 // validIdentifier checks to see if a string is a valid
 // JavaScript identifier
 // E.g:
-//     justLettersAndNumbers1 -> true
-//     a key with spaces      -> false
-//     1startsWithANumber	  -> false
+//
+//	justLettersAndNumbers1 -> true
+//	a key with spaces      -> false
+//	1startsWithANumber	  -> false
 func validIdentifier(s string) bool {
 	if reservedWords[s] || s == "" {
 		return false
@@ -68,8 +69,9 @@ func validIdentifier(s string) bool {
 // validFirstRune returns true for runes that are valid
 // as the first rune in an identifier.
 // E.g:
-//     'r' -> true
-//     '7' -> false
+//
+//	'r' -> true
+//	'7' -> false
 func validFirstRune(r rune) bool {
 	return unicode.In(r,
 		unicode.Lu,

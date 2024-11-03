@@ -1,0 +1,11 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod vendor
+
+source:
+  enabled: true
+  files:
+    - vendor

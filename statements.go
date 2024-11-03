@@ -14,7 +14,7 @@ import (
 // A statement is a slice of tokens representing an assignment statement.
 // An assignment statement is something like:
 //
-//   json.city = "Leeds";
+//	json.city = "Leeds";
 //
 // Where 'json', '.', 'city', '=', '"Leeds"' and ';' are discrete tokens.
 // Statements are stored as tokens to make sorting more efficient, and so
