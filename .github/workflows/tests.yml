@@ -1,0 +1,29 @@
+name: "Runs go test on various platforms"
+
+# any branch is useful for testing before a PR is submitted
+on: [push, pull_request]
+
+jobs:
+  go-test:
+    # run on pushes to any branch
+    # run on PRs from external forks
+    if: |
+         (github.event_name != 'pull_request')
+         || (github.event.pull_request.head.repo.id != github.event.pull_request.base.repo.id)
+    name: go test
+    runs-on: ${{ matrix.os}}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-20.04, ubuntu-latest, ubuntu-16.04, macos-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Go
+      uses: actions/setup-go@v2
+
+    - name: Test
+      run: |
+        go version
+        go test
