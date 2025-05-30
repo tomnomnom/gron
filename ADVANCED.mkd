@@ -97,7 +97,7 @@ Removing the `fgrep "json[0]"` from the pipeline means we do the same for all co
     "name": "Tom Hudson"
   },
   {
-    "message": "Refactors natural sort to actualy work + be more readable",
+    "message": "Refactors natural sort to actually work + be more readable",
     "name": "Tom Hudson"
   },
 ...
@@ -110,7 +110,7 @@ json[0].name = "Tom Hudson";
 json[0].message = "Adds 0.1.7 to changelog";
 json[0].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
 json[1].name = "Tom Hudson";
-json[1].message = "Refactors natural sort to actualy work + be more readable";
+json[1].message = "Refactors natural sort to actually work + be more readable";
 json[1].parents[0].html_url = "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f077cebf0d942c1fa8bc51e8f2";
 ...
 ```
@@ -122,7 +122,7 @@ json[0].name = "Tom Hudson";
 json[0].message = "Adds 0.1.7 to changelog";
 json[0].parents[0] = "https://github.com/tomnomnom/gron/commit/48aba5325ece087ae24ab72684851cbe77ce8311";
 json[1].name = "Tom Hudson";
-json[1].message = "Refactors natural sort to actualy work + be more readable";
+json[1].message = "Refactors natural sort to actually work + be more readable";
 json[1].parents[0] = "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f077cebf0d942c1fa8bc51e8f2";
 ...
 ```
@@ -139,7 +139,7 @@ And, of course, the statements can be turned back into JSON with `gron --ungron`
     ]
   },
   {
-    "message": "Refactors natural sort to actualy work + be more readable",
+    "message": "Refactors natural sort to actually work + be more readable",
     "name": "Tom Hudson",
     "parents": [
       "https://github.com/tomnomnom/gron/commit/3eca8bf5e07151f077cebf0d942c1fa8bc51e8f2"
