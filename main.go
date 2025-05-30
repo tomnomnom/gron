@@ -82,7 +82,7 @@ func init() {
 		h += "  curl -s http://jsonplaceholder.typicode.com/users/1 | gron\n"
 		h += "  gron http://jsonplaceholder.typicode.com/users/1 | grep company | gron --ungron\n"
 
-		fmt.Fprintf(os.Stderr, h)
+		fmt.Fprint(os.Stderr, h)
 	}
 }
 
