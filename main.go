@@ -419,6 +419,10 @@ func gronValues(r io.Reader, w io.Writer, opts int) (int, error) {
 	for scanner.Scan() {
 		s := statementFromString(scanner.Text())
 
+		if len(s) == 0 {
+			return exitParseStatements, fmt.Errorf("failed to parse '%s' as gron statement", scanner.Text())
+		}
+
 		// strip off the leading 'json' bare key
 		if s[0].typ == typBare && s[0].text == "json" {
 			s = s[1:]
