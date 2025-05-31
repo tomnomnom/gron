@@ -15,11 +15,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
-        "reflect"
 
 	"github.com/pkg/errors"
 )
