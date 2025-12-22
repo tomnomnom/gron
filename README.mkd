@@ -41,6 +41,12 @@ Put the binary in your `$PATH` (e.g. in `/usr/local/bin`) to make it easy to use
 ▶ sudo mv gron /usr/local/bin/
 ```
 
+If you are a [mise](https://github.com/jdx/mise) user, you can also install gron on Linux/MacOS/Windows using a command like:
+
+```
+▶ mise use -g gron@latest
+```
+
 If you're a Mac user you can also [install gron via brew](http://braumeister.org/formula/gron):
 ```
 ▶ brew install gron
