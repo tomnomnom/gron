@@ -167,6 +167,22 @@ func TestLex(t *testing.T) {
 			{`1`, typNumber},
 			{`;`, typSemi},
 		}},
+
+		{"json\t=\t1;", []token{
+			{`json`, typBare},
+			{`=`, typEquals},
+			{`1`, typNumber},
+			{`;`, typSemi},
+		}},
+
+		{"json.foo  \t = \t \"bar\"\t;", []token{
+			{`json`, typBare},
+			{`.`, typDot},
+			{`foo`, typBare},
+			{`=`, typEquals},
+			{`"bar"`, typString},
+			{`;`, typSemi},
+		}},
 	}
 
 	for _, c := range cases {

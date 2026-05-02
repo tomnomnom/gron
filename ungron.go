@@ -2,7 +2,8 @@
 // back into JSON. The expected input grammar is:
 //
 //   Input ::= '--'* Statement (Statement | '--')*
-//   Statement ::= Path Space* "=" Space* Value ";" "\n"
+//   Statement ::= Path WS* "=" WS* Value WS* ";" "\n"
+//   WS ::= ' ' | '\t'
 //   Path ::= (BareWord) ("." BareWord | ("[" Key "]"))*
 //   Value ::= String | Number | "true" | "false" | "null" | "[]" | "{}"
 //   BareWord ::= (UnicodeLu | UnicodeLl | UnicodeLm | UnicodeLo | UnicodeNl | '$' | '_') (UnicodeLu | UnicodeLl | UnicodeLm | UnicodeLo | UnicodeNl | UnicodeMn | UnicodeMc | UnicodeNd | UnicodePc | '$' | '_')*
@@ -197,7 +198,7 @@ func lexStatement(l *lexer) lexFn {
 		return lexBareWord
 	case r == '[':
 		return lexBraces
-	case r == ' ', r == '=':
+	case r == ' ', r == '\t', r == '=':
 		return lexValue
 	case r == '-':
 		// grep -A etc can add '--' lines to output
@@ -287,7 +288,7 @@ func lexQuotedKey(l *lexer) lexFn {
 
 // lexValue lexes a value at the end of a statement
 func lexValue(l *lexer) lexFn {
-	l.acceptRun(" ")
+	l.acceptRun(" \t")
 	l.ignore()
 
 	if l.accept("=") {
@@ -295,7 +296,7 @@ func lexValue(l *lexer) lexFn {
 	} else {
 		return nil
 	}
-	l.acceptRun(" ")
+	l.acceptRun(" \t")
 	l.ignore()
 
 	switch {
@@ -331,7 +332,7 @@ func lexValue(l *lexer) lexFn {
 		l.emit(typNumber)
 	}
 
-	l.acceptRun(" ")
+	l.acceptRun(" \t")
 	l.ignore()
 
 	if l.accept(";") {
