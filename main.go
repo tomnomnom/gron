@@ -206,6 +206,11 @@ type actionFn func(io.Reader, io.Writer, int) (int, error)
 func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 	var err error
 
+	// Buffer the output; one write per statement is slow. Lines are
+	// never split between writes, so color sequences stay whole.
+	bw := bufio.NewWriter(w)
+	defer bw.Flush()
+
 	var conv statementconv
 	if opts&optMonochrome > 0 {
 		conv = statementToString
@@ -231,7 +236,11 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 				goto out
 			}
 		}
-		fmt.Fprintln(w, conv(s))
+		line := conv(s)
+		if bw.Available() < len(line)+1 {
+			bw.Flush()
+		}
+		fmt.Fprintln(bw, line)
 	}
 
 out:
