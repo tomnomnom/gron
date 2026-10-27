@@ -414,7 +414,7 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 // without any quotes or anything of that sort; a bit like jq -r
 // e.g. json[0].user.name = "Sam"; -> Sam
 func gronValues(r io.Reader, w io.Writer, opts int) (int, error) {
-	scanner := bufio.NewScanner(os.Stdin)
+	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
 		s := statementFromString(scanner.Text())
@@ -442,10 +442,10 @@ func gronValues(r io.Reader, w io.Writer, opts int) (int, error) {
 					// just swallow errors and try to continue
 					continue
 				}
-				fmt.Println(text)
+				fmt.Fprintln(w, text)
 
 			case typNumber, typTrue, typFalse, typNull:
-				fmt.Println(t.text)
+				fmt.Fprintln(w, t.text)
 
 			default:
 				// Nothing
