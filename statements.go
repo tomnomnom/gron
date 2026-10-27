@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -387,7 +388,18 @@ func (ss statements) Contains(search statement) bool {
 // and returns statements or an error on failure
 func statementsFromJSON(r io.Reader, prefix statement) (statements, error) {
 	var top interface{}
-	d := json.NewDecoder(r)
+	const utf8BOM = "\xEF\xBB\xBF"
+	reader := bufio.NewReaderSize(r, len(utf8BOM))
+	// Accept one leading UTF-8 BOM for interoperability. Probe its first byte
+	// separately so ordinary short JSON documents need no extra input.
+	if first, _ := reader.Peek(1); len(first) == 1 && first[0] == utf8BOM[0] {
+		if bom, _ := reader.Peek(len(utf8BOM)); string(bom) == utf8BOM {
+			if _, err := reader.Discard(len(utf8BOM)); err != nil {
+				return nil, err
+			}
+		}
+	}
+	d := json.NewDecoder(reader)
 	d.UseNumber()
 	err := d.Decode(&top)
 	if err != nil {
