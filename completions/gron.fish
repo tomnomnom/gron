@@ -7,6 +7,8 @@
 complete -c gron -s u -l ungron     --description "Reverse the operation (turn assignments back into JSON)"
 complete -c gron -s c -l colorize   --description "Colorize output (default on tty)"
 complete -c gron -s m -l monochrome --description "Monochrome (don't colorize output)"
+complete -c gron      -l color      --description "Alias for --colorize"
+complete -c gron      -l no-color   --description "Alias for --monochrome"
 complete -c gron -s s -l stream     --description "Treat each line of input as a separate JSON object"
 complete -c gron -s k -l insecure   --description "Disable certificate validation"
 complete -c gron -s j -l json       --description "Represent gron data as JSON stream"
