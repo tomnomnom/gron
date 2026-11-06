@@ -4,7 +4,8 @@
 //   Input ::= '--'* Statement (Statement | '--')*
 //   Statement ::= Path Space* "=" Space* Value ";" "\n"
 //   Path ::= (BareWord) ("." BareWord | ("[" Key "]"))*
-//   Value ::= String | Number | "true" | "false" | "null" | "[]" | "{}"
+//   Value ::= String | Number | "true" | "false" | "null" | "[]" | "{}" | EmptyConstructor
+//   EmptyConstructor ::= "new" Space+ ("Array" | "Object") Space* ("(" Space* ")")?
 //   BareWord ::= (UnicodeLu | UnicodeLl | UnicodeLm | UnicodeLo | UnicodeNl | '$' | '_') (UnicodeLu | UnicodeLl | UnicodeLm | UnicodeLo | UnicodeNl | UnicodeMn | UnicodeMc | UnicodeNd | UnicodePc | '$' | '_')*
 //   Key ::= [0-9]+ | String
 //   String ::= '"' (UnescapedRune | ("\" (["\/bfnrt] | ('u' Hex))))* '"'
@@ -16,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -23,6 +25,8 @@ import (
 
 	"github.com/pkg/errors"
 )
+
+var emptyConstructorPattern = regexp.MustCompile(`^new[ \t]+(Array|Object)[ \t]*(?:\([ \t]*\))?$`)
 
 // errRecoverable is an error type to represent errors that
 // can be recovered from; e.g. an empty line in the input
@@ -312,6 +316,23 @@ func lexValue(l *lexer) lexFn {
 	case l.accept("f"):
 		l.acceptRun("alse")
 		l.emit(typFalse)
+
+	case strings.HasPrefix(l.text[l.pos:], "new ") || strings.HasPrefix(l.text[l.pos:], "new\t"):
+		l.acceptUntil(";")
+		match := emptyConstructorPattern.FindStringSubmatch(strings.TrimSpace(l.text[l.tokenStart:l.pos]))
+		if match == nil {
+			l.emit(typError)
+			return nil
+		}
+		var t token
+		switch match[1] {
+		case "Array":
+			t = token{"[]", typEmptyArray}
+		case "Object":
+			t = token{"{}", typEmptyObject}
+		}
+		l.ignore()
+		l.tokens = append(l.tokens, t)
 
 	case l.accept("n"):
 		l.acceptRun("ul")
