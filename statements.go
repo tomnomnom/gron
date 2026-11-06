@@ -276,7 +276,8 @@ func (ss statements) toInterface() (interface{}, error) {
 
 	// Get all the individually parsed statements
 	var parsed []interface{}
-	for _, s := range ss {
+	var lines []int
+	for i, s := range ss {
 		u, err := ungronTokens(s)
 
 		switch err.(type) {
@@ -285,10 +286,11 @@ func (ss statements) toInterface() (interface{}, error) {
 		case errRecoverable:
 			continue
 		default:
-			return nil, errors.Wrapf(err, "ungron failed for `%s`", s)
+			return nil, errors.Wrapf(err, "ungron failed on line %d for `%s`", i+1, s)
 		}
 
 		parsed = append(parsed, u)
+		lines = append(lines, i+1)
 	}
 
 	if len(parsed) == 0 {
@@ -296,10 +298,10 @@ func (ss statements) toInterface() (interface{}, error) {
 	}
 
 	merged := parsed[0]
-	for _, p := range parsed[1:] {
+	for i, p := range parsed[1:] {
 		m, err := recursiveMerge(merged, p)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to merge statements")
+			return nil, errors.Wrapf(err, "failed to merge statements on line %d", lines[i+1])
 		}
 		merged = m
 	}
