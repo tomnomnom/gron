@@ -348,10 +348,12 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 
 	// Make a list of statements from the input
 	var ss statements
+	var line int
 	for scanner.Scan() {
+		line++
 		s, err := maker(scanner.Text())
 		if err != nil {
-			return exitParseStatements, err
+			return exitParseStatements, errors.Wrapf(err, "invalid statement on line %d", line)
 		}
 		ss.add(s)
 	}
