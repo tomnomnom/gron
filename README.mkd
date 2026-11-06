@@ -220,6 +220,8 @@ Options:
   -v, --values     Print just the values of provided assignments
   -c, --colorize   Colorize output (default on tty)
   -m, --monochrome Monochrome (don't colorize output)
+      --color     Alias for --colorize
+      --no-color  Alias for --monochrome
   -s, --stream     Treat each line of input as a separate JSON object
   -k, --insecure   Disable certificate validation
   -j, --json       Represent gron data as JSON stream

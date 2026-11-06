@@ -65,6 +65,8 @@ func init() {
 		h += "  -v, --values     Print just the values of provided assignments\n"
 		h += "  -c, --colorize   Colorize output (default on tty)\n"
 		h += "  -m, --monochrome Monochrome (don't colorize output)\n"
+		h += "      --color     Alias for --colorize\n"
+		h += "      --no-color  Alias for --monochrome\n"
 		h += "  -s, --stream     Treat each line of input as a separate JSON object\n"
 		h += "  -k, --insecure   Disable certificate validation\n"
 		h += "  -x, --proxy      Set proxy configuration\n"
@@ -111,8 +113,10 @@ func main() {
 	flag.BoolVar(&ungronFlag, "ungron", false, "")
 	flag.BoolVar(&ungronFlag, "u", false, "")
 	flag.BoolVar(&colorizeFlag, "colorize", false, "")
+	flag.BoolVar(&colorizeFlag, "color", false, "")
 	flag.BoolVar(&colorizeFlag, "c", false, "")
 	flag.BoolVar(&monochromeFlag, "monochrome", false, "")
+	flag.BoolVar(&monochromeFlag, "no-color", false, "")
 	flag.BoolVar(&monochromeFlag, "m", false, "")
 	flag.BoolVar(&streamFlag, "s", false, "")
 	flag.BoolVar(&streamFlag, "stream", false, "")

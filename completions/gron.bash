@@ -8,7 +8,7 @@
 # Example: cat ./completions/gron.bash >> ~/.bashrc
 
 function _gron_completion {
-  local AVAILABLE_COMMANDS="--colorize --insecure --json --monochrome --no-sort --stream --ungron --values --version"
+  local AVAILABLE_COMMANDS="--color --colorize --insecure --json --monochrome --no-color --no-sort --stream --ungron --values --version"
   COMPREPLY=()
 
   local CURRENT_WORD=${COMP_WORDS[COMP_CWORD]}
