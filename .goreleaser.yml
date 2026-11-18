@@ -9,3 +9,25 @@ source:
   enabled: true
   files:
     - vendor
+
+builds:
+  - id: gron
+    binary: gron
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - "386"
+      - s390x
+    # s390x is only a Linux target; drop it from the darwin/windows matrix
+    ignore:
+      - goos: darwin
+        goarch: s390x
+      - goos: windows
+        goarch: s390x
