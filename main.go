@@ -26,6 +26,7 @@ const (
 	exitFetchURL
 	exitParseStatements
 	exitJSONEncode
+	exitWriteOutput
 )
 
 // Option bitfields
@@ -81,6 +82,7 @@ func init() {
 		h += fmt.Sprintf("  %d\t%s\n", exitFetchURL, "Failed to fetch URL")
 		h += fmt.Sprintf("  %d\t%s\n", exitParseStatements, "Failed to parse statements")
 		h += fmt.Sprintf("  %d\t%s\n", exitJSONEncode, "Failed to encode JSON")
+		h += fmt.Sprintf("  %d\t%s\n", exitWriteOutput, "Failed to write output")
 		h += "\n"
 
 		h += "Examples:\n"
@@ -231,7 +233,9 @@ func gron(r io.Reader, w io.Writer, opts int) (int, error) {
 				goto out
 			}
 		}
-		fmt.Fprintln(w, conv(s))
+		if err := writeOutputLine(w, conv(s)); err != nil {
+			return exitWriteOutput, err
+		}
 	}
 
 out:
@@ -284,7 +288,9 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 		}
 	}
 
-	fmt.Fprintln(w, conv(top))
+	if err := writeOutputLine(w, conv(top)); err != nil {
+		return exitWriteOutput, err
+	}
 
 	// Read the input line by line
 	sc = bufio.NewScanner(r)
@@ -316,7 +322,9 @@ func gronStream(r io.Reader, w io.Writer, opts int) (int, error) {
 				}
 
 			}
-			fmt.Fprintln(w, conv(s))
+			if err := writeOutputLine(w, conv(s)); err != nil {
+				return exitWriteOutput, err
+			}
 		}
 	}
 	if err = sc.Err(); err != nil {
@@ -402,10 +410,12 @@ func ungron(r io.Reader, w io.Writer, opts int) (int, error) {
 	// has a trailing newline character, but the colorized version
 	// does not. Strip the whitespace so that neither has the newline
 	// character on the end, and then we'll add a newline in the
-	// Fprintf below
+	// writeOutputLine call below
 	j = bytes.TrimSpace(j)
 
-	fmt.Fprintf(w, "%s\n", j)
+	if err := writeOutputLine(w, string(j)); err != nil {
+		return exitWriteOutput, err
+	}
 
 	return exitOK, nil
 }
@@ -479,4 +489,16 @@ func colorizeJSON(src []byte) ([]byte, error) {
 func fatal(code int, err error) {
 	fmt.Fprintf(os.Stderr, "%s\n", err)
 	os.Exit(code)
+}
+
+// writeOutputLine reports both writer errors and a short write without an error.
+func writeOutputLine(w io.Writer, line string) error {
+	n, err := fmt.Fprintln(w, line)
+	if err == nil && n != len(line)+1 {
+		err = io.ErrShortWrite
+	}
+	if err != nil {
+		return errors.Wrap(err, "failed to write output")
+	}
+	return nil
 }

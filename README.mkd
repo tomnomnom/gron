@@ -234,6 +234,7 @@ Exit Codes:
   4	Failed to fetch URL
   5	Failed to parse statements
   6	Failed to encode JSON
+  7	Failed to write output
 
 Examples:
   gron /tmp/apiresponse.json
